@@ -25,4 +25,26 @@ model Product {
   category    String
   isAvailable Boolean  @default(true)
   createdAt   DateTime @default(now())
+  orders      Order[]
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  userId        String?
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id])
+  reference     String    @unique  // Tripay reference (e.g. "T12345")
+  merchantRef   String    @unique  // Our internal ID (e.g. "ORD-xxx")
+  status        String    @default("PENDING") // PENDING | PAID | FAILED | EXPIRED | REFUND
+  amount        Float
+  payerName     String?
+  payerEmail    String?
+  paymentMethod String?
+  paymentName   String?
+  checkoutUrl   String?
+  paidAt        DateTime?
+  expiredAt     DateTime?
+  note          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
