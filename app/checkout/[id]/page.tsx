@@ -44,7 +44,7 @@ export default function CheckoutPage() {
     customerName:  "",
     customerEmail: "",
     customerPhone: "",
-    paymentMethod: "QRIS", // default: QRIS
+    paymentMethod: "QRIS2", // default: QRIS2
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -294,18 +294,18 @@ export default function CheckoutPage() {
                   
                   {/* QRIS (Highlighted) */}
                   <div
-                    onClick={() => handleChange("paymentMethod", "QRIS")}
+                    onClick={() => handleChange("paymentMethod", "QRIS2")}
                     className={`relative cursor-pointer rounded-2xl border p-5 transition-all duration-200 ${
-                      form.paymentMethod === "QRIS"
+                      form.paymentMethod === "QRIS2"
                         ? "bg-[#111111] border-white ring-1 ring-white/20 shadow-[0_0_30px_rgba(255,255,255,0.03)]"
                         : "bg-[#0a0a0a] border-neutral-800/80 hover:border-neutral-700"
                     }`}
                   >
                     {/* Active Indicator */}
                     <div className={`absolute top-5 right-5 w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
-                      form.paymentMethod === "QRIS" ? "bg-white border-white" : "border-neutral-600"
+                      form.paymentMethod === "QRIS2" ? "bg-white border-white" : "border-neutral-600"
                     }`}>
-                      {form.paymentMethod === "QRIS" && <Check className="w-3 h-3 text-black" strokeWidth={3} />}
+                      {form.paymentMethod === "QRIS2" && <Check className="w-3 h-3 text-black" strokeWidth={3} />}
                     </div>
 
                     <div className="flex items-start gap-4">
