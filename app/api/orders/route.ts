@@ -1,28 +1,28 @@
+/**
+ * app/api/orders/route.ts
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Route: GET /api/orders  — List orders (authenticated)
+ *        POST /api/orders — (Legacy) Create order via Tripay
+ *
+ * NOTE: Untuk checkout dari frontend, gunakan /api/checkout (route baru).
+ * Route ini dipertahankan untuk kompatibilitas mundur dan penggunaan internal.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
 import { NextRequest, NextResponse } from "next/server";
-import { createHmac } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-
-// ─── Generate unique merchant reference ──────────────────────────────────────
-function generateMerchantRef(): string {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `NVD-${timestamp}-${random}`;
-}
-
-// ─── Generate Tripay signature for checkout ───────────────────────────────────
-function generateSignature(merchantCode: string, merchantRef: string, amount: number): string {
-  const privateKey = process.env.TRIPAY_PRIVATE_KEY!;
-  return createHmac("sha256", privateKey)
-    .update(`${merchantCode}${merchantRef}${amount}`)
-    .digest("hex");
-}
+import {
+  generateMerchantRef,
+  generateTripaySignature,
+  createTripayTransaction,
+} from "@/lib/tripay";
 
 // ─── POST /api/orders — Create order & Tripay checkout ───────────────────────
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    const body = await req.json();
+    const body    = await req.json();
     const { productId, paymentMethod, customerName, customerEmail, customerPhone } = body;
 
     // Validasi input
@@ -38,67 +38,54 @@ export async function POST(req: NextRequest) {
     if (!product) {
       return NextResponse.json({ error: "Produk tidak ditemukan" }, { status: 404 });
     }
+    if (!product.isAvailable) {
+      return NextResponse.json({ error: "Produk tidak tersedia" }, { status: 400 });
+    }
     if (product.stock < 1) {
       return NextResponse.json({ error: "Stok produk habis" }, { status: 400 });
     }
 
     const merchantRef = generateMerchantRef();
     const amount      = Math.round(product.price);
+    const expiredTime = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
+    const appUrl      = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 
-    // ── Buat transaksi di Tripay ─────────────────────────────────────────────
-    const tripayPayload = {
-      method:           paymentMethod,        // e.g. "BRIVA", "QRIS", "GOPAY"
-      merchant_ref:     merchantRef,
-      amount:           amount,
-      customer_name:    customerName,
-      customer_email:   customerEmail,
-      customer_phone:   customerPhone ?? "",
+    // ── Buat transaksi di Tripay ──────────────────────────────────────────────
+    const tripayResponse = await createTripayTransaction({
+      method:         paymentMethod,
+      merchant_ref:   merchantRef,
+      amount,
+      customer_name:  customerName,
+      customer_email: customerEmail,
+      customer_phone: customerPhone ?? "",
       order_items: [
         {
           sku:      product.id,
-          name:     product.title,
+          name:     product.title.slice(0, 100),
           price:    amount,
           quantity: 1,
         },
       ],
-      callback_url:     `${process.env.NEXTAUTH_URL}/api/callback`,
-      return_url:       `${process.env.NEXTAUTH_URL}/orders/${merchantRef}`,
-      expired_time:     Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 jam
-      signature:        generateSignature(
-        process.env.TRIPAY_MERCHANT_CODE!,
-        merchantRef,
-        amount
-      ),
-    };
+      callback_url: `${appUrl}/api/callback`,
+      return_url:   `${appUrl}/orders/${merchantRef}`,
+      expired_time: expiredTime,
+      signature:    generateTripaySignature(merchantRef, amount),
+    });
 
-    const tripayResponse = await fetch(
-      `${process.env.TRIPAY_BASE_URL}/transaction/create`,
-      {
-        method:  "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.TRIPAY_API_KEY}`,
-          "Content-Type":  "application/json",
-        },
-        body: JSON.stringify(tripayPayload),
-      }
-    );
-
-    const tripayData = await tripayResponse.json();
-
-    if (!tripayData.success) {
-      console.error("[Tripay] Create transaction failed:", tripayData);
+    if (!tripayResponse.success) {
+      console.error("[Orders] Tripay gagal membuat transaksi:", tripayResponse);
       return NextResponse.json(
-        { error: "Gagal membuat transaksi Tripay", detail: tripayData.message },
+        { error: "Gagal membuat transaksi Tripay", detail: tripayResponse.message },
         { status: 502 }
       );
     }
 
-    const { data: txData } = tripayData;
+    const txData = tripayResponse.data;
 
-    // ── Simpan order ke database ─────────────────────────────────────────────
+    // ── Simpan order ke database ──────────────────────────────────────────────
     const order = await prisma.order.create({
       data: {
-        userId:        session?.user?.id ?? null,
+        userId:        session?.user ? (session.user as { id?: string }).id ?? null : null,
         productId:     product.id,
         merchantRef,
         reference:     txData.reference,
@@ -114,12 +101,12 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({
-      success:      true,
-      merchantRef:  order.merchantRef,
-      checkoutUrl:  txData.checkout_url,
-      reference:    txData.reference,
+      success:     true,
+      merchantRef: order.merchantRef,
+      checkoutUrl: txData.checkout_url,
+      reference:   txData.reference,
       amount,
-      expiredAt:    txData.expired_time,
+      expiredAt:   txData.expired_time,
     });
 
   } catch (error) {
@@ -147,6 +134,7 @@ export async function GET() {
     });
 
     return NextResponse.json(orders);
+
   } catch (error) {
     console.error("[Orders] GET error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -1,3 +1,14 @@
+/**
+ * prisma/schema.prisma
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Skema database Nexvora Digital
+ *
+ * Jalankan migrasi setelah perubahan:
+ *   npx prisma migrate dev --name <nama-migrasi>
+ *   npx prisma generate
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,45 +17,72 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── User ─────────────────────────────────────────────────────────────────────
 model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
   password  String
-  role      String   @default("USER")
+  role      String   @default("USER") // "USER" | "ADMIN"
   createdAt DateTime @default(now())
 }
 
+// ─── Product ──────────────────────────────────────────────────────────────────
 model Product {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  price       Float
-  stock       Int      @default(0)
-  imageUrl    String?
-  category    String
-  isAvailable Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  orders      Order[]
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  price        Float
+  stock        Int      @default(0)
+  imageUrl     String?
+
+  // Kategori layanan: "netflix", "spotify", "youtube", "disney+", dll.
+  category     String
+
+  isAvailable  Boolean  @default(true)
+
+  // Stok akun digital yang akan dikirim ke pembeli setelah pembayaran PAID.
+  // Format bebas, misalnya: "email:password" atau JSON array.
+  // Field ini bersifat sensitif — jangan expose ke frontend!
+  accountStock String?  @db.Text
+
+  createdAt    DateTime @default(now())
+  orders       Order[]
 }
 
+// ─── Order ────────────────────────────────────────────────────────────────────
 model Order {
-  id            String    @id @default(cuid())
-  userId        String?
-  productId     String
-  product       Product   @relation(fields: [productId], references: [id])
-  reference     String    @unique  // Tripay reference (e.g. "T12345")
-  merchantRef   String    @unique  // Our internal ID (e.g. "ORD-xxx")
-  status        String    @default("PENDING") // PENDING | PAID | FAILED | EXPIRED | REFUND
-  amount        Float
-  payerName     String?
-  payerEmail    String?
-  paymentMethod String?
-  paymentName   String?
-  checkoutUrl   String?
-  paidAt        DateTime?
-  expiredAt     DateTime?
-  note          String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String  @id @default(cuid())
+  userId      String?                        // null jika guest checkout
+
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+
+  // merchantRef: Reference unik yang kita buat, e.g. "NVD-LB2K4A1-X9F2"
+  merchantRef String  @unique
+
+  // reference: Reference dari Tripay, e.g. "T0001234"
+  // Bisa null sebelum transaksi dikonfirmasi Tripay
+  reference   String?
+
+  // Status pembayaran: PENDING | PAID | FAILED | EXPIRED | REFUND
+  status      String  @default("PENDING")
+
+  amount      Float                          // Total pembayaran dalam IDR
+
+  payerName   String?                        // Nama pembeli
+  payerEmail  String?                        // Email pembeli
+  paymentMethod String?                      // Kode metode, e.g. "BRIVA"
+  paymentName   String?                      // Nama metode, e.g. "BRI Virtual Account"
+  checkoutUrl   String?                      // URL halaman pembayaran Tripay
+
+  paidAt      DateTime?                      // Waktu pembayaran dikonfirmasi
+  expiredAt   DateTime?                      // Waktu kedaluwarsa transaksi
+  note        String?                        // Catatan dari Tripay
+
+  // Flag apakah produk digital sudah dikirim ke pembeli
+  delivered   Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
