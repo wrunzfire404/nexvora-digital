@@ -121,7 +121,9 @@ export async function POST(req: NextRequest) {
       // Tripay akan POST ke sini saat status pembayaran berubah
       callback_url: `${appUrl}/api/callback`,
       // User di-redirect kesini setelah selesai di halaman Tripay
-      return_url:   `${appUrl}/orders/${merchantRef}`,
+      return_url:   `${appUrl}/checkout`,
+      // User di-redirect kesini jika klik 'Kembali' di halaman pembayaran
+      cancel_url:   `${appUrl}/checkout`,
       expired_time: expiredTime,
       signature,
     });
