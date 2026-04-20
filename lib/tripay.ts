@@ -136,24 +136,36 @@ export function generateMerchantRef(): string {
 export async function createTripayTransaction(
   payload: TripayCreateTransactionPayload
 ): Promise<TripayApiResponse<TripayTransactionData>> {
-  const baseUrl = getEnv("TRIPAY_BASE_URL");
-  const apiKey  = getEnv("TRIPAY_API_KEY");
+  const apiKey = getEnv("TRIPAY_API_KEY");
 
-  const response = await fetch(`${baseUrl}/transaction/create`, {
+  // ─── Routing via VPS Proxy ────────────────────────────────────────────────
+  // Request TIDAK dikirim langsung ke Tripay untuk menghindari masalah
+  // whitelist IP dinamis Vercel. Semua request diteruskan melalui VPS proxy
+  // dengan IP statis yang sudah di-whitelist di Tripay.
+  //
+  // Proxy URL : http://168.110.202.124:8080/api/tripay-proxy
+  // Proxy akan mem-forward request ini ke Tripay API secara otomatis.
+  const PROXY_URL    = "http://168.110.202.124:8080/api/tripay-proxy";
+  const PROXY_SECRET = "NEXVORA_PROXY_SECRET_2026"; // Shared secret untuk otorisasi proxy
+
+  const response = await fetch(PROXY_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+      // Header otorisasi ke proxy (keamanan antar server)
+      "X-Nexvora-Secret": PROXY_SECRET,
+      // Header standar Tripay — proxy akan meneruskannya ke Tripay API
+      "Authorization":    `Bearer ${apiKey}`,
+      "Content-Type":     "application/json",
     },
     body: JSON.stringify(payload),
-    // Timeout: 15 detik (Next.js fetch dengan AbortSignal)
-    signal: AbortSignal.timeout(15_000),
+    // Timeout lebih panjang karena ada 1 hop tambahan (kita → proxy → Tripay)
+    signal: AbortSignal.timeout(20_000),
   });
 
   if (!response.ok) {
     const text = await response.text();
     throw new Error(
-      `[Tripay] HTTP ${response.status}: ${text.slice(0, 200)}`
+      `[Tripay Proxy] HTTP ${response.status}: ${text.slice(0, 200)}`
     );
   }
 
