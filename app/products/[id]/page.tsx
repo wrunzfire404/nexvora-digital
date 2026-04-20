@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { NetflixLogo, SpotifyLogo, YouTubeLogo, DisneyLogo, ChatGPTLogo, CanvaLogo, TelegramLogo } from "@/components/BrandLogos";
+import { NetflixLogo, SpotifyLogo, YouTubeLogo, DisneyLogo, ChatGPTLogo, CanvaLogo } from "@/components/BrandLogos";
 
 type Product = {
   id: string; title: string; description: string;
@@ -57,8 +57,7 @@ export default function ProductDetailPage() {
   const svc = SERVICE_MAP[product.category.toLowerCase()];
 
   const handleBuy = () => {
-    const txt = `Halo Nexvora Digital! Saya ingin membeli:\n\n*${product.title}*\nHarga: Rp ${product.price.toLocaleString("id-ID")}\n\nApakah stok masih tersedia?`;
-    window.open(`${process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || "https://t.me/NexvoraBot"}?text=${encodeURIComponent(txt)}`, "_blank");
+    router.push(`/checkout/${product.id}`);
   };
 
   return (
@@ -104,7 +103,7 @@ export default function ProductDetailPage() {
 
               {/* Guarantees */}
               <div className="grid grid-cols-3 gap-3 mb-8 p-4 rounded-2xl border border-white/5 bg-white/2">
-                {[["⚡","Instan"],["🛡️","Garansi"],["💬","Support"]].map(([ic,lb])=>(
+                {[["⚡","Instan"],["🛡️","Garansi"],["🔒","Aman"]].map(([ic,lb])=>(
                   <div key={lb} className="text-center">
                     <div className="text-xl mb-1">{ic}</div>
                     <div className="text-xs text-slate-500">{lb}</div>
@@ -119,7 +118,7 @@ export default function ProductDetailPage() {
                 className="w-full py-4 rounded-2xl font-black text-white text-base flex items-center justify-center gap-3 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 style={product.stock > 0 ? {background:`linear-gradient(135deg, #1a6cff, #0041cc)`, boxShadow:"0 0 30px rgba(26,108,255,0.4)"} : {background:"#1e293b"}}
               >
-                {product.stock > 0 ? (<><TelegramLogo className="w-5 h-5"/>Beli via Telegram</>) : "Stok Habis"}
+                {product.stock > 0 ? (<>🛒 Beli Sekarang</>) : "Stok Habis"}
               </motion.button>
             </div>
           </div>

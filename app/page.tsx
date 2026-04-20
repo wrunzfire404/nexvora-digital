@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { NetflixLogo, SpotifyLogo, YouTubeLogo, DisneyLogo, ChatGPTLogo, CanvaLogo, TelegramLogo } from "@/components/BrandLogos";
+import { NetflixLogo, SpotifyLogo, YouTubeLogo, DisneyLogo, ChatGPTLogo, CanvaLogo } from "@/components/BrandLogos";
 
 type Product = {
   id: string;
@@ -83,10 +83,9 @@ export default function Home() {
                 <span className="relative z-10">Lihat Semua Produk →</span>
               </motion.button>
             </Link>
-            <Link href={process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || "#"} target="_blank">
+            <Link href="/products">
               <motion.button whileHover={{scale:1.04}} whileTap={{scale:0.97}} className="flex items-center gap-2.5 px-8 py-4 rounded-2xl font-semibold text-white text-base border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-all">
-                <TelegramLogo className="w-5 h-5" />
-                Order via Telegram
+                🛍️ Jelajahi Katalog
               </motion.button>
             </Link>
           </motion.div>
@@ -248,26 +247,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── FOOTER ─── */}
-      <footer className="border-t border-white/5 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10"><Image src="/nexlogo.png" alt="Nexvora" fill sizes="40px" className="object-contain" style={{ mixBlendMode: "screen" }}/></div>
-              <div>
-                <p className="text-white font-black tracking-widest uppercase text-sm">NEXVORA</p>
-                <p className="text-slate-500 text-xs tracking-[0.3em] uppercase">Digital</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-8">
-              {[{l:"Katalog",h:"/products"},{l:"Login",h:"/login"},{l:"Daftar",h:"/register"}].map(lk=>(
-                <Link key={lk.h} href={lk.h} className="text-slate-500 hover:text-white text-sm transition-colors">{lk.l}</Link>
-              ))}
-            </div>
-            <p className="text-slate-600 text-xs">© {new Date().getFullYear()} Nexvora Digital</p>
-          </div>
-        </div>
-      </footer>
+
     </div>
   );
 }
