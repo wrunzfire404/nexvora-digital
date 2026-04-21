@@ -30,7 +30,7 @@ interface OrderWithProduct {
     id: string;
     title: string;
     category: string;
-    // accountStock: string | null; // Aktifkan setelah field ditambahkan ke schema
+    accountStock: string | null;
   };
 }
 
@@ -143,32 +143,34 @@ export async function triggerProductDelivery(order: OrderWithProduct): Promise<v
   ];
 
   // ── 2. Kirim detail akun ke pembeli (Email / Telegram) ────────────────────
-  // TODO: Aktifkan setelah field `accountStock` ditambahkan ke Prisma schema.
-  //
-  // Contoh implementasi jika pakai field accountStock di Product:
-  //
-  // if (order.product.accountStock) {
-  //   // Kirim via Telegram jika ada chat ID pembeli (butuh field di Order)
-  //   // const buyerChatId = order.buyerTelegramId;
-  //   // if (buyerChatId) {
-  //   //   const deliveryMessage = [
-  //   //     "✅ <b>Pesanan Anda Berhasil!</b>",
-  //   //     "",
-  //   //     `📦 <b>${order.product.title}</b>`,
-  //   //     "",
-  //   //     "Detail akun Anda:",
-  //   //     `<code>${order.product.accountStock}</code>`,
-  //   //     "",
-  //   //     "⚠️ Jangan bagikan info ini ke siapapun.",
-  //   //   ].join("\n");
-  //   //   notifyPromises.push(
-  //   //     sendTelegramMessage(buyerChatId, deliveryMessage)
-  //   //   );
-  //   // }
-  //
-  //   // Alternatif: Kirim via Email menggunakan Resend / Nodemailer
-  //   // await sendEmailDelivery(order.payerEmail!, order.product.accountStock);
-  // }
+  if (order.product.accountStock) {
+    // Cek apakah pembeli dari Telegram (dikenali dari format email)
+    if (order.payerEmail && order.payerEmail.startsWith('tg_')) {
+      const buyerChatId = order.payerEmail.split('@')[0].replace('tg_', '');
+      
+      const deliveryMessage = [
+        "✅ <b>Pesanan Anda Berhasil Diproses!</b>",
+        "",
+        `📦 <b>${order.product.title}</b>`,
+        `🔗 <b>Resi:</b> <code>${order.reference}</code>`,
+        "",
+        "<b>DETAIL AKUN ANDA:</b>",
+        `<code>${order.product.accountStock}</code>`,
+        "",
+        "⚠️ <i>Tolong jangan bagikan detail di atas kepada siapa pun.</i>",
+        "Terima kasih telah berbelanja di Nexvora Digital! 🙏"
+      ].join("\n");
+      
+      notifyPromises.push(
+        sendTelegramMessage(buyerChatId, deliveryMessage)
+      );
+    } else {
+      // TODO: Logika pengiriman via Email (jika dari Web)
+      console.log(`[Notify] Pembeli bukan via Telegram (${order.payerEmail}). Harap implementasi Nodemailer/Resend.`);
+    }
+  } else {
+    console.warn(`[Notify] Produk ${order.product.title} belum memiliki stok akun digital (accountStock kosong)`);
+  }
 
   // Tunggu semua notifikasi selesai
   await Promise.allSettled(notifyPromises);

@@ -163,6 +163,7 @@ export async function POST(req: NextRequest) {
           id:       order.product.id,
           title:    order.product.title,
           category: order.product.category,
+          accountStock: order.product.accountStock,
         },
       }).then(() => {
         // Tandai order sebagai sudah dikirim (delivered = true)

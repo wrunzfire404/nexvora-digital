@@ -169,7 +169,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success:     true,
       merchantRef: order.merchantRef,
-      checkoutUrl: txData.checkout_url,  // ← REDIRECT USER KE SINI
+      checkoutUrl: txData.checkout_url,
+      qrUrl:       (txData as any).qr_url || null, // Untuk Bot Telegram
       reference:   txData.reference,
       amount,
       expiredAt:   txData.expired_time,
