@@ -8,12 +8,12 @@ import { CATEGORIES, getBrandInfo } from "@/components/BrandLogos";
 type Product = {
   id: string; title: string; description: string;
   price: number; stock: number; imageUrl: string;
-  category: string; isAvailable: boolean;
+  category: string; isAvailable: boolean; accountStock?: string;
 };
 
 const EMPTY_FORM = {
-  title: "", description: "", price: "", stock: "",
-  imageUrl: "", category: "Netflix", isAvailable: true,
+  title: "", description: "", price: "", stock: "0",
+  imageUrl: "", category: "Netflix", isAvailable: true, accountStock: "",
 };
 
 export default function AdminProductsPage() {
@@ -45,7 +45,7 @@ export default function AdminProductsPage() {
         title: product.title, description: product.description || "",
         price: product.price.toString(), stock: product.stock.toString(),
         imageUrl: product.imageUrl || "", category: product.category,
-        isAvailable: product.isAvailable,
+        isAvailable: product.isAvailable, accountStock: product.accountStock || "",
       });
       setPreview(product.imageUrl || "");
     } else {
@@ -309,12 +309,26 @@ export default function AdminProductsPage() {
                         value={formData.price} onChange={e => setFormData(f => ({...f, price: e.target.value}))}/>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Stok *</label>
-                      <input type="number" min="0" required
-                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                        placeholder="10"
-                        value={formData.stock} onChange={e => setFormData(f => ({...f, stock: e.target.value}))}/>
+                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Total Stok Terhitung</label>
+                      <input type="number" readOnly
+                        className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 focus:outline-none text-sm cursor-not-allowed"
+                        value={formData.stock} />
+                      <p className="text-xs text-slate-500 mt-1">Stok dihitung otomatis dari baris di bawah</p>
                     </div>
+                  </div>
+
+                  {/* Account Stock */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Daftar Akun / Lisensi (1 baris = 1 stok)</label>
+                    <textarea rows={5}
+                      className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y text-sm font-mono whitespace-pre"
+                      placeholder="email1@gmail.com : pass1&#10;email2@gmail.com : pass2&#10;Atau link aktivasi..."
+                      value={formData.accountStock} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        const lines = val.split('\n').filter(line => line.trim() !== '').length;
+                        setFormData(f => ({...f, accountStock: val, stock: lines.toString()}));
+                      }}/>
                   </div>
 
                   {/* Deskripsi */}

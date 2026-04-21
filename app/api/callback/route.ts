@@ -125,6 +125,17 @@ export async function POST(req: NextRequest) {
 
     // ── 7. Proses Berdasarkan Status ──────────────────────────────────────────
     if (newStatus === "PAID") {
+      // Ambil 1 baris akun teratas dari daftar accountStock
+      const accountLines = order.product.accountStock 
+        ? order.product.accountStock.split('\n').filter(line => line.trim() !== '') 
+        : [];
+      
+      const accountToGive = accountLines.length > 0 
+        ? accountLines[0].trim() 
+        : "⚠️ Maaf, stok akun belum di-restock. Silakan hubungi @wrunzfire dengan menyertakan Nomor Resi ini.";
+      
+      const remainingAccounts = accountLines.slice(1).join('\n');
+
       // ─ Transaksi database: update order + kurangi stok secara atomik ────────
       await prisma.$transaction([
         // Update order ke status PAID
@@ -138,10 +149,13 @@ export async function POST(req: NextRequest) {
             paidAt:        paid_at ? new Date(paid_at * 1000) : new Date(),
           },
         }),
-        // Kurangi stok produk sebanyak 1
+        // Kurangi stok produk sebanyak 1 dan update sisa accountStock
         prisma.product.update({
           where: { id: order.productId },
-          data:  { stock: { decrement: 1 } },
+          data:  { 
+            stock: { decrement: 1 },
+            accountStock: remainingAccounts
+          },
         }),
       ]);
 
@@ -163,7 +177,7 @@ export async function POST(req: NextRequest) {
           id:       order.product.id,
           title:    order.product.title,
           category: order.product.category,
-          accountStock: order.product.accountStock,
+          accountStock: accountToGive, // Kirimkan HANYA 1 akun yang terpilih
         },
       }).then(() => {
         // Tandai order sebagai sudah dikirim (delivered = true)

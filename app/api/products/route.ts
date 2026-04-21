@@ -18,6 +18,18 @@ export async function GET(req: NextRequest) {
           ],
         }),
       },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        price: true,
+        stock: true,
+        imageUrl: true,
+        category: true,
+        isAvailable: true,
+        createdAt: true,
+        // SANGAT PENTING: JANGAN PERNAH SELECT accountStock DI SINI!
+      },
       orderBy: { createdAt: "desc" },
     });
 
