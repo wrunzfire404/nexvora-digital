@@ -47,6 +47,7 @@ export default function CheckoutPage() {
     paymentMethod: "QRIS2", // default: QRIS2
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [qty, setQty]       = useState(1);
 
   // ─── Fetch Produk ───────────────────────────────────────────────────────────
   useEffect(() => {
@@ -125,6 +126,7 @@ export default function CheckoutPage() {
           customerName:  form.customerName.trim(),
           customerEmail: form.customerEmail.trim(),
           customerPhone: form.customerPhone.trim(),
+          quantity:      qty,
         }),
       });
 
@@ -172,8 +174,8 @@ export default function CheckoutPage() {
   );
 
   const brandInfo = getBrandInfo(product.category);
-  const BrandLogo = brandInfo.Logo;
-  const totalPrice = product.price;
+  const BrandLogo  = brandInfo.Logo;
+  const totalPrice = product.price * qty;
 
   return (
     <div className="min-h-screen bg-[#000000] text-neutral-200 font-sans selection:bg-white/20">
@@ -277,6 +279,38 @@ export default function CheckoutPage() {
                       />
                       {errors.customerPhone && <p className="text-red-400 text-[11px] mt-1.5">{errors.customerPhone}</p>}
                     </div>
+
+                    {/* Quantity Selector */}
+                    {product.stock > 1 && (
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-medium text-neutral-400 mb-1.5">
+                          Jumlah{" "}
+                          <span className="text-neutral-600">(Stok tersedia: {product.stock})</span>
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setQty(q => Math.max(1, q - 1))}
+                            disabled={qty <= 1}
+                            className="w-10 h-10 rounded-xl bg-[#111] border border-neutral-800 text-white text-lg font-semibold disabled:opacity-30 hover:bg-neutral-800 transition-colors flex items-center justify-center"
+                          >
+                            −
+                          </button>
+                          <span className="w-12 text-center text-white font-semibold text-base select-none">{qty}</span>
+                          <button
+                            type="button"
+                            onClick={() => setQty(q => Math.min(product.stock, q + 1))}
+                            disabled={qty >= product.stock}
+                            className="w-10 h-10 rounded-xl bg-[#111] border border-neutral-800 text-white text-lg font-semibold disabled:opacity-30 hover:bg-neutral-800 transition-colors flex items-center justify-center"
+                          >
+                            +
+                          </button>
+                          <span className="text-xs text-neutral-500 ml-1">
+                            = Rp {(product.price * qty).toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -424,7 +458,9 @@ export default function CheckoutPage() {
                 {/* Calculation */}
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral-400">Subtotal</span>
+                    <span className="text-neutral-400">
+                      Harga satuan{qty > 1 ? ` × ${qty}` : ""}
+                    </span>
                     <span className="text-neutral-200">Rp {totalPrice.toLocaleString("id-ID")}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">

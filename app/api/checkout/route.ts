@@ -34,7 +34,10 @@ export async function POST(req: NextRequest) {
       customerName,       // Nama lengkap pembeli
       customerEmail,      // Email pembeli (untuk konfirmasi)
       customerPhone,      // Nomor WhatsApp/HP pembeli
+      quantity,           // Jumlah item (opsional, default 1)
     } = body;
+
+    const qty = Math.max(1, Math.min(100, parseInt(quantity ?? "1") || 1));
 
     // Validasi field wajib
     if (!productId || !paymentMethod || !customerName || !customerEmail) {
@@ -82,9 +85,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (product.stock < qty) {
+      return NextResponse.json(
+        { success: false, error: `Stok tidak mencukupi. Tersedia: ${product.stock}` },
+        { status: 400 }
+      );
+    }
+
     // ── 3. Persiapan Data Transaksi ───────────────────────────────────────────
     const merchantRef = generateMerchantRef();
-    const amount      = Math.round(product.price); // Tripay hanya terima integer
+    const amount      = Math.round(product.price * qty); // total = harga × qty
 
     // Expired 24 jam dari sekarang (Unix timestamp)
     const expiredTime = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
@@ -114,16 +124,15 @@ export async function POST(req: NextRequest) {
         {
           sku:      product.id,
           name:     product.title.slice(0, 100), // Tripay max 100 char
-          price:    amount,
-          quantity: 1,
+          price:    Math.round(product.price),
+          quantity: qty,
         },
       ],
       // Tripay akan POST ke sini saat status pembayaran berubah
       callback_url: `${appUrl}/api/callback`,
-      // User di-redirect kesini setelah selesai di halaman Tripay
-      return_url:   `${appUrl}/checkout`,
-      // User di-redirect kesini jika klik 'Kembali' di halaman pembayaran
-      cancel_url:   `${appUrl}/checkout`,
+      // User di-redirect kesini setelah selesai — dengan merchantRef agar halaman bisa fetch order
+      return_url:   `${appUrl}/checkout?tripay_merchant_ref=${merchantRef}`,
+      cancel_url:   `${appUrl}/checkout?tripay_merchant_ref=${merchantRef}`,
       expired_time: expiredTime,
       signature,
     });
