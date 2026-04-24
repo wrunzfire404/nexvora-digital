@@ -4,18 +4,17 @@
  * Modul pengiriman notifikasi otomatis setelah pembayaran berhasil (PAID).
  *
  * Flow pengiriman produk digital:
- * 1. Ambil stok akun dari database (field `accountStock` di Product)
- * 2. Kirim detail akun ke email pembeli (opsional, via Resend/Nodemailer)
- * 3. Kirim notifikasi ke admin via Telegram Bot
- * 4. Update stok yang sudah terpakai
- *
- * Environment variables yang diperlukan:
- *   TELEGRAM_BOT_TOKEN  — Token bot Telegram dari @BotFather
- *   TELEGRAM_ADMIN_CHAT_ID — Chat ID admin/grup Telegram untuk notifikasi
+ * 1. Kirim notifikasi ke admin via Telegram Bot
+ * 2. Kirim akun ke pembeli via Telegram (jika dari bot)
+ * 3. Kirim invoice + akun ke pembeli via Email (Resend)
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
+
+import { sendDeliveryEmail } from "@/lib/email";
+
 // ─── Types ────────────────────────────────────────────────────────────────────
+
 
 interface OrderWithProduct {
   id: string;
@@ -134,20 +133,20 @@ export async function triggerProductDelivery(order: OrderWithProduct): Promise<v
   console.log(`[Notify] 🚀 Memulai pengiriman produk untuk order ${order.merchantRef}`);
 
   // ── 1. Notifikasi admin Telegram ───────────────────────────────────────────
-  // Jalankan secara paralel untuk efisiensi, bungkus try-catch agar
-  // kegagalan notifikasi tidak menghentikan proses utama.
   const notifyPromises: Promise<unknown>[] = [
     notifyAdminTelegram(order).catch(err =>
       console.error("[Notify] Admin Telegram gagal:", err)
     ),
   ];
 
-  // ── 2. Kirim detail akun ke pembeli (Email / Telegram) ────────────────────
+  // ── 2. Kirim detail akun ke pembeli ───────────────────────────────────────
   if (order.product.accountStock) {
-    // Cek apakah pembeli dari Telegram (dikenali dari format email)
+    const accountData = order.product.accountStock;
+
+    // 2a. Pembeli dari Bot Telegram (email format: tg_CHATID@nexvora.digital)
     if (order.payerEmail && order.payerEmail.startsWith('tg_')) {
       const buyerChatId = order.payerEmail.split('@')[0].replace('tg_', '');
-      
+
       const deliveryMessage = [
         "✅ <b>Pesanan Anda Berhasil Diproses!</b>",
         "",
@@ -155,18 +154,32 @@ export async function triggerProductDelivery(order: OrderWithProduct): Promise<v
         `🔗 <b>Resi:</b> <code>${order.reference}</code>`,
         "",
         "<b>DETAIL AKUN ANDA:</b>",
-        `<code>${order.product.accountStock}</code>`,
+        `<code>${accountData}</code>`,
         "",
         "⚠️ <i>Tolong jangan bagikan detail di atas kepada siapa pun.</i>",
         "Terima kasih telah berbelanja di Nexvora Digital! 🙏"
       ].join("\n");
-      
+
       notifyPromises.push(
         sendTelegramMessage(buyerChatId, deliveryMessage)
       );
-    } else {
-      // TODO: Logika pengiriman via Email (jika dari Web)
-      console.log(`[Notify] Pembeli bukan via Telegram (${order.payerEmail}). Harap implementasi Nodemailer/Resend.`);
+    }
+
+    // 2b. Pembeli dari Web — kirim invoice + akun via Email (Resend)
+    if (order.payerEmail && !order.payerEmail.startsWith('tg_')) {
+      notifyPromises.push(
+        sendDeliveryEmail({
+          customerName:    order.payerName    ?? "Pelanggan",
+          customerEmail:   order.payerEmail,
+          productTitle:    order.product.title,
+          productCategory: order.product.category,
+          merchantRef:     order.merchantRef,
+          tripayRef:       order.reference,
+          amount:          order.amount,
+          paymentMethod:   order.paymentMethod ?? "-",
+          accountData,
+        }).catch(err => console.error("[Notify] Email delivery gagal:", err))
+      );
     }
   } else {
     console.warn(`[Notify] Produk ${order.product.title} belum memiliki stok akun digital (accountStock kosong)`);
