@@ -183,16 +183,56 @@ function OrderStatusCard({ order }: { order: any }) {
           {isPaid && (
             <div className="space-y-4">
               {isDelivered ? (
-                // Sudah terkirim
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-5 text-center">
-                  <p className="text-emerald-400 font-semibold text-sm mb-1">
+                <>{
+                  /* ─── STATUS BANNER ─── */
+                }
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 text-center">
+                  <p className="text-emerald-400 font-semibold text-sm">
                     ✅ Akun Berhasil Dikirim!
                   </p>
-                  <p className="text-emerald-500/70 text-xs leading-relaxed">
-                    Detail akun telah dikirim ke email <span className="font-mono text-emerald-400">{order.payerEmail}</span>.
-                    Cek inbox dan folder Spam Anda.
+                  <p className="text-emerald-500/70 text-xs mt-1 leading-relaxed">
+                    Tersimpan juga di inbox{" "}
+                    <span className="font-mono text-emerald-400">{order.payerEmail}</span>
                   </p>
                 </div>
+
+                {/* ─── ACCOUNT DATA BOX ─── */}
+                {order.product?.accountStock && (
+                  <div className="bg-gradient-to-br from-blue-950/40 via-slate-900/60 to-purple-950/40 border border-blue-500/25 rounded-2xl overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-blue-500/15">
+                      <div className="w-7 h-7 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm">🔑</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-blue-300 text-xs font-semibold uppercase tracking-wider">Detail Akun Digital</p>
+                        <p className="text-blue-500/60 text-[10px] mt-0.5">{order.product.title}</p>
+                      </div>
+                    </div>
+
+                    {/* Account Lines */}
+                    <div className="p-4 space-y-2">
+                      {order.product.accountStock.split("\n").filter((l: string) => l.trim()).map((line: string, i: number) => (
+                        <div
+                          key={i}
+                          className="bg-black/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3 group"
+                        >
+                          <code className="text-blue-100 text-sm font-mono break-all leading-relaxed flex-1">
+                            {line}
+                          </code>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Warning */}
+                    <div className="px-5 pb-4">
+                      <p className="text-[10px] text-blue-500/50 leading-relaxed">
+                        ⚠️ Jangan bagikan detail akun ini kepada siapapun. Segera ganti password setelah login.
+                      </p>
+                    </div>
+                  </div>
+                )}
+                </>
               ) : deliveryMode === "INSTANT" ? (
                 // INSTANT tapi belum delivered (webhook miss) — arahkan cek status
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-5 text-center">
@@ -225,14 +265,17 @@ function OrderStatusCard({ order }: { order: any }) {
                 </div>
               ) : null}
 
-              {/* Info email */}
-              <div className="bg-neutral-900/50 border border-neutral-800/50 rounded-xl p-3 flex items-start gap-2.5">
-                <span className="text-lg flex-shrink-0">📧</span>
-                <p className="text-xs text-neutral-400 leading-relaxed">
-                  Invoice & detail akun dikirim ke <span className="text-neutral-200 font-mono">{order.payerEmail}</span>.
-                  Jika tidak ada, cek folder Spam.
-                </p>
-              </div>
+              {/* Info email — hanya tampil jika sudah delivered */}
+              {isDelivered && (
+                <div className="bg-neutral-900/50 border border-neutral-800/50 rounded-xl p-3 flex items-start gap-2.5">
+                  <span className="text-lg flex-shrink-0">📧</span>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Salinan invoice & akun juga dikirim ke{" "}
+                    <span className="text-neutral-200 font-mono">{order.payerEmail}</span>.
+                    Jika tidak ada, cek folder Spam.
+                  </p>
+                </div>
+              )}
 
               <Link
                 href="/products"
