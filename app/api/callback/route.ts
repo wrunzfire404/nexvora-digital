@@ -161,34 +161,130 @@ export async function POST(req: NextRequest) {
 
       console.log(`[Callback] ✅ Order ${merchant_ref} → PAID, stok dikurangi`);
 
-      // ─ TRIGGER PENGIRIMAN PRODUK DIGITAL ──────────────────────────────────
-      // Jalankan secara async (non-blocking) agar response ke Tripay cepat.
-      // Error di sini tidak akan mengganggu response 200 ke Tripay.
-      triggerProductDelivery({
-        id:            order.id,
-        merchantRef:   order.merchantRef,
-        reference:     reference ?? order.reference ?? "-",
-        amount:        order.amount,
-        payerName:     order.payerName,
-        payerEmail:    order.payerEmail,
-        paymentMethod: payment_method,
-        paymentName:   payment_name,
-        product: {
-          id:       order.product.id,
-          title:    order.product.title,
-          category: order.product.category,
-          accountStock: accountToGive, // Kirimkan HANYA 1 akun yang terpilih
-        },
-      }).then(() => {
-        // Tandai order sebagai sudah dikirim (delivered = true)
-        return prisma.order.update({
-          where: { merchantRef: merchant_ref },
-          data:  { delivered: true },
+      // ─ Tentukan mode pengiriman berdasarkan deliveryMode produk ────────────────────────
+      const deliveryMode = order.product.deliveryMode ?? "INSTANT";
+
+      if (deliveryMode === "INSTANT") {
+        // ─ INSTANT: Kirim otomatis langsung ke pembeli ────────────────────────────────
+        // Jalankan secara async (non-blocking) agar response ke Tripay cepat.
+        triggerProductDelivery({
+          id:            order.id,
+          merchantRef:   order.merchantRef,
+          reference:     reference ?? order.reference ?? "-",
+          amount:        order.amount,
+          payerName:     order.payerName,
+          payerEmail:    order.payerEmail,
+          paymentMethod: payment_method,
+          paymentName:   payment_name,
+          product: {
+            id:           order.product.id,
+            title:        order.product.title,
+            category:     order.product.category,
+            accountStock: accountToGive, // Kirimkan HANYA 1 akun yang terpilih
+          },
+        }).then(() => {
+          // Tandai order sebagai sudah dikirim (delivered = true)
+          return prisma.order.update({
+            where: { merchantRef: merchant_ref },
+            data:  { delivered: true },
+          });
+        }).catch(err => {
+          // Log error tapi jangan throw — Tripay sudah dapat 200 response
+          console.error("[Callback] ❌ Error saat triggerProductDelivery:", err);
         });
-      }).catch(err => {
-        // Log error tapi jangan throw — Tripay sudah dapat 200 response
-        console.error("[Callback] ❌ Error saat triggerProductDelivery:", err);
-      });
+
+      } else if (deliveryMode === "MANUAL") {
+        // ─ MANUAL: Kirim notifikasi admin saja, TIDAK kirim akun ke buyer ────────────
+        console.log(`[Callback] 📎 Mode MANUAL: Notif admin dikirim, akun menunggu dikirim manual`);
+        // Kirim notif ke admin via Telegram bahwa ada order masuk yang perlu dikirim manual
+        const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+        if (adminChatId) {
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
+          if (botToken) {
+            const msg = [
+              "🔔 <b>ORDER BARU — BUTUH KIRIM MANUAL</b>",
+              "",
+              `📦 <b>Produk:</b> ${order.product.title}`,
+              `👤 <b>Pembeli:</b> ${order.payerName ?? "-"}`,
+              `📧 <b>Email:</b> <code>${order.payerEmail ?? "-"}</code>`,
+              `💰 <b>Nominal:</b> Rp ${order.amount.toLocaleString("id-ID")}`,
+              `🔑 <b>Merchant Ref:</b> <code>${order.merchantRef}</code>`,
+              "",
+              "⚠️ Harap kirim akun secara manual via Admin Panel.",
+            ].join("\n");
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: adminChatId, text: msg, parse_mode: "HTML" }),
+            }).catch(err => console.error("[Callback] Admin notify MANUAL gagal:", err));
+          }
+        }
+        // Juga beritahu buyer bahwa pesanan sedang diproses
+        if (order.payerEmail && order.payerEmail.startsWith("tg_")) {
+          const buyerChatId = order.payerEmail.split("@")[0].replace("tg_", "");
+          const botToken = process.env.TELEGRAM_BOT_TOKEN;
+          if (botToken) {
+            const buyerMsg = [
+              "✅ <b>Pembayaran Berhasil Diterima!</b>",
+              "",
+              `📦 <b>${order.product.title}</b>`,
+              `🔑 <b>Resi:</b> <code>${reference ?? order.merchantRef}</code>`,
+              "",
+              "⏳ <i>Pesanan Anda sedang diproses oleh admin dan akan segera dikirim.</i>",
+              "Jika dalam 1 jam belum dikirim, hubungi @wrunzfire dengan menyertakan Nomor Resi.",
+            ].join("\n");
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: buyerChatId, text: buyerMsg, parse_mode: "HTML" }),
+            }).catch(err => console.error("[Callback] Buyer notify MANUAL gagal:", err));
+          }
+        }
+
+      } else if (deliveryMode === "PO") {
+        // ─ PO (Pre-Order): Beritahu buyer estimasi waktu dari poNote ────────────────
+        console.log(`[Callback] 📆 Mode PO: Notif buyer & admin dikirim`);
+        const poNote = order.product.poNote ?? "Estimasi 1–3 hari kerja";
+        const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+        const botToken    = process.env.TELEGRAM_BOT_TOKEN;
+
+        if (adminChatId && botToken) {
+          const adminMsg = [
+            "📆 <b>PRE-ORDER BARU MASUK</b>",
+            "",
+            `📦 <b>Produk:</b> ${order.product.title}`,
+            `👤 <b>Pembeli:</b> ${order.payerName ?? "-"}`,
+            `📧 <b>Email:</b> <code>${order.payerEmail ?? "-"}</code>`,
+            `💰 <b>Nominal:</b> Rp ${order.amount.toLocaleString("id-ID")}`,
+            `🔑 <b>Merchant Ref:</b> <code>${order.merchantRef}</code>`,
+            "",
+            `⏱ <b>Estimasi:</b> ${poNote}`,
+          ].join("\n");
+          fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: adminChatId, text: adminMsg, parse_mode: "HTML" }),
+          }).catch(err => console.error("[Callback] Admin notify PO gagal:", err));
+        }
+
+        if (order.payerEmail && order.payerEmail.startsWith("tg_") && botToken) {
+          const buyerChatId = order.payerEmail.split("@")[0].replace("tg_", "");
+          const buyerMsg = [
+            "✅ <b>Pembayaran Pre-Order Berhasil!</b>",
+            "",
+            `📦 <b>${order.product.title}</b>`,
+            `🔑 <b>Resi:</b> <code>${reference ?? order.merchantRef}</code>`,
+            "",
+            `⏱ <b>Estimasi pengiriman:</b> ${poNote}`,
+            "Kami akan menghubungi Anda saat akun sudah siap. Terima kasih! 🙏",
+          ].join("\n");
+          fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: buyerChatId, text: buyerMsg, parse_mode: "HTML" }),
+          }).catch(err => console.error("[Callback] Buyer notify PO gagal:", err));
+        }
+      }
 
     } else {
       // ─ Status selain PAID (FAILED, EXPIRED, REFUND) ──────────────────────────

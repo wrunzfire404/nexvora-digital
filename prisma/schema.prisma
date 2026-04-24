@@ -46,6 +46,13 @@ model Product {
   // Field ini bersifat sensitif — jangan expose ke frontend!
   accountStock String?  @db.Text
 
+  // Mode pengiriman akun setelah pembayaran PAID:
+  // INSTANT = kirim otomatis langsung ke pembeli
+  // MANUAL  = admin kirim manual dari dashboard
+  // PO      = pre-order, admin konfirmasi dulu sebelum kirim
+  deliveryMode String   @default("INSTANT") // "INSTANT" | "MANUAL" | "PO"
+  poNote       String?  // Catatan untuk mode PO, e.g. "Estimasi 1-2 hari kerja"
+
   createdAt    DateTime @default(now())
   orders       Order[]
 }

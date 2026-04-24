@@ -40,6 +40,7 @@ export interface TripayCreateTransactionPayload {
   order_items: TripayOrderItem[];
   callback_url: string;     // URL webhook Tripay akan POST notifikasi
   return_url: string;       // URL redirect setelah pembayaran selesai
+  cancel_url?: string;      // URL redirect jika user klik 'Kembali' (opsional)
   expired_time: number;     // Unix timestamp waktu kedaluwarsa transaksi
   signature: string;        // HMAC-SHA256 signature
 }

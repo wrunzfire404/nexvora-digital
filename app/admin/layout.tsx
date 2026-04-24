@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -31,11 +31,22 @@ export default function AdminLayout({
     );
   }
 
+  const [pendingDelivery, setPendingDelivery] = useState(0);
+
+  useEffect(() => {
+    // Fetch jumlah order PAID belum delivered untuk badge warning
+    fetch("/api/admin/stats")
+      .then((r) => r.json())
+      .then((d) => setPendingDelivery(d.pendingDelivery ?? 0))
+      .catch(() => {});
+  }, []);
+
   const navItems = [
-    { name: "Dashboard", href: "/admin", icon: "📊" },
-    { name: "Kelola Produk", href: "/admin/products", icon: "📦" },
-    { name: "Kelola User", href: "/admin/users", icon: "👥" },
-    { name: "Settings", href: "/admin/settings", icon: "⚙️" },
+    { name: "Dashboard",     href: "/admin",          icon: "📊", badge: null },
+    { name: "Orders",        href: "/admin/orders",    icon: "🧾", badge: pendingDelivery > 0 ? pendingDelivery : null },
+    { name: "Kelola Produk", href: "/admin/products",  icon: "📦", badge: null },
+    { name: "Kelola User",   href: "/admin/users",     icon: "👥", badge: null },
+    { name: "Settings",      href: "/admin/settings",  icon: "⚙️", badge: null },
   ];
 
   return (
@@ -68,7 +79,12 @@ export default function AdminLayout({
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>
-                <span>{item.name}</span>
+                <span className="flex-1">{item.name}</span>
+                {item.badge && (
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-orange-500 text-white text-[10px] font-bold">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

@@ -5,17 +5,25 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 
 type Stats = {
-  totalProducts: number;
-  totalUsers: number;
+  totalProducts:    number;
+  totalUsers:       number;
   availableProducts: number;
-  outOfStock: number;
+  outOfStock:       number;
+  totalOrders:      number;
+  paidOrders:       number;
+  pendingDelivery:  number;
+  pendingOrders:    number;
 };
 
 const STAT_CARDS = [
-  { key: "totalProducts", label: "Total Produk", icon: "📦", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-  { key: "totalUsers", label: "Total User", icon: "👥", color: "text-green-400 bg-green-500/10 border-green-500/20" },
-  { key: "availableProducts", label: "Produk Tersedia", icon: "✅", color: "text-teal-400 bg-teal-500/10 border-teal-500/20" },
-  { key: "outOfStock", label: "Stok Habis", icon: "⚠️", color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
+  { key: "totalProducts",    label: "Total Produk",    icon: "📦", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
+  { key: "totalUsers",       label: "Total User",      icon: "👥", color: "text-green-400 bg-green-500/10 border-green-500/20" },
+  { key: "availableProducts",label: "Produk Tersedia", icon: "✅", color: "text-teal-400 bg-teal-500/10 border-teal-500/20" },
+  { key: "outOfStock",       label: "Stok Habis",      icon: "⚠️", color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
+  { key: "totalOrders",      label: "Total Orders",    icon: "🧾", color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
+  { key: "paidOrders",       label: "Orders Dibayar",  icon: "💰", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+  { key: "pendingOrders",    label: "Menunggu Bayar",  icon: "⏳", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+  { key: "pendingDelivery",  label: "Belum Terkirim",  icon: "🔴", color: "text-red-400 bg-red-500/10 border-red-500/20" },
 ];
 
 export default function AdminDashboard() {
@@ -76,11 +84,12 @@ export default function AdminDashboard() {
         className="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-8"
       >
         <h2 className="text-lg font-bold text-white mb-4">Aksi Cepat</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[
-            { label: "Tambah Produk Baru", href: "/admin/products", icon: "➕", desc: "Tambah produk ke katalog", color: "bg-blue-600 hover:bg-blue-700" },
-            { label: "Kelola User", href: "/admin/users", icon: "👥", desc: "Lihat dan kelola pengguna", color: "bg-purple-600 hover:bg-purple-700" },
-            { label: "Lihat Toko", href: "/products", icon: "🛍️", desc: "Tampilan seperti pembeli", color: "bg-slate-700 hover:bg-slate-600" },
+            { label: "Kelola Orders",    href: "/admin/orders",   icon: "🧾", desc: "Lihat & kirim akun ke pembeli", color: "bg-orange-600 hover:bg-orange-700" },
+            { label: "Tambah Produk",    href: "/admin/products",  icon: "➕", desc: "Tambah produk ke katalog",     color: "bg-blue-600 hover:bg-blue-700" },
+            { label: "Kelola User",      href: "/admin/users",     icon: "👥", desc: "Lihat dan kelola pengguna",    color: "bg-purple-600 hover:bg-purple-700" },
+            { label: "Lihat Toko",       href: "/products",        icon: "🛍️", desc: "Tampilan seperti pembeli",    color: "bg-slate-700 hover:bg-slate-600" },
           ].map((action) => (
             <Link key={action.href} href={action.href}>
               <div className={`${action.color} p-5 rounded-xl cursor-pointer group`}>
