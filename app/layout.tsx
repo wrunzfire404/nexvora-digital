@@ -10,7 +10,13 @@ const outfit = Outfit({ subsets: ["latin"], weight: ["300", "400", "500", "600",
 export const metadata: Metadata = {
   title: "Nexvora Digital — Premium Digital Store",
   description: "Platform e-commerce produk digital premium. Netflix, Spotify, YouTube, Disney+ dan layanan streaming lainnya dengan harga terbaik.",
+  icons: {
+    icon:        "/nexlogo.png",
+    shortcut:    "/nexlogo.png",
+    apple:       "/nexlogo.png",
+  },
 };
+
 
 export default function RootLayout({
   children,

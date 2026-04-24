@@ -143,7 +143,7 @@ export async function GET(
       }).then(() =>
         prisma.order.update({
           where: { merchantRef: order.merchantRef },
-          data: { delivered: true },
+          data: { delivered: true, deliveredAccount: accountToGive },
         })
       ).catch((err) =>
         console.error("[PayStatus] Re-delivery gagal:", err)
@@ -234,7 +234,7 @@ export async function GET(
         .then(() =>
           prisma.order.update({
             where: { merchantRef: order.merchantRef },
-            data: { delivered: true },
+            data: { delivered: true, deliveredAccount: accountToGive },
           })
         )
         .catch((err) =>

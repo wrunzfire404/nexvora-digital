@@ -183,15 +183,19 @@ export async function POST(req: NextRequest) {
             accountStock: accountToGive, // Kirimkan HANYA 1 akun yang terpilih
           },
         }).then(() => {
-          // Tandai order sebagai sudah dikirim (delivered = true)
+          // Tandai order sebagai sudah dikirim + simpan data akun yg dikirim
           return prisma.order.update({
             where: { merchantRef: merchant_ref },
-            data:  { delivered: true },
+            data:  {
+              delivered:       true,
+              deliveredAccount: accountToGive, // ← Simpan akun untuk ditampilkan di halaman sukses
+            },
           });
         }).catch(err => {
           // Log error tapi jangan throw — Tripay sudah dapat 200 response
           console.error("[Callback] ❌ Error saat triggerProductDelivery:", err);
         });
+
 
       } else if (deliveryMode === "MANUAL") {
         // ─ MANUAL: Kirim notifikasi admin saja, TIDAK kirim akun ke buyer ────────────

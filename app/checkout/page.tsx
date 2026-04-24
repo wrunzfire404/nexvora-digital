@@ -197,7 +197,7 @@ function OrderStatusCard({ order }: { order: any }) {
                 </div>
 
                 {/* ─── ACCOUNT DATA BOX ─── */}
-                {order.product?.accountStock && (
+                {order.deliveredAccount && (
                   <div className="bg-gradient-to-br from-blue-950/40 via-slate-900/60 to-purple-950/40 border border-blue-500/25 rounded-2xl overflow-hidden">
                     {/* Header */}
                     <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-blue-500/15">
@@ -206,18 +206,18 @@ function OrderStatusCard({ order }: { order: any }) {
                       </div>
                       <div className="flex-1">
                         <p className="text-blue-300 text-xs font-semibold uppercase tracking-wider">Detail Akun Digital</p>
-                        <p className="text-blue-500/60 text-[10px] mt-0.5">{order.product.title}</p>
+                        <p className="text-blue-500/60 text-[10px] mt-0.5">{order.product?.title}</p>
                       </div>
                     </div>
 
                     {/* Account Lines */}
                     <div className="p-4 space-y-2">
-                      {order.product.accountStock.split("\n").filter((l: string) => l.trim()).map((line: string, i: number) => (
+                      {order.deliveredAccount.split("\n").filter((l: string) => l.trim()).map((line: string, i: number) => (
                         <div
                           key={i}
-                          className="bg-black/40 border border-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3 group"
+                          className="bg-black/40 border border-white/5 rounded-xl px-4 py-3"
                         >
-                          <code className="text-blue-100 text-sm font-mono break-all leading-relaxed flex-1">
+                          <code className="text-blue-100 text-sm font-mono break-all leading-relaxed block">
                             {line}
                           </code>
                         </div>
@@ -232,6 +232,7 @@ function OrderStatusCard({ order }: { order: any }) {
                     </div>
                   </div>
                 )}
+
                 </>
               ) : deliveryMode === "INSTANT" ? (
                 // INSTANT tapi belum delivered (webhook miss) — arahkan cek status

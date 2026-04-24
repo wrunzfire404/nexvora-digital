@@ -88,7 +88,11 @@ model Order {
   note        String?                        // Catatan dari Tripay
 
   // Flag apakah produk digital sudah dikirim ke pembeli
-  delivered   Boolean  @default(false)
+  delivered        Boolean  @default(false)
+
+  // Data akun yang dikirimkan ke pembeli (disimpan saat delivery terjadi)
+  // Format bebas sesuai produk, e.g. "email@x.com:pass123"
+  deliveredAccount String?  @db.Text
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
