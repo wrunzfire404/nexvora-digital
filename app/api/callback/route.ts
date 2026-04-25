@@ -142,11 +142,12 @@ export async function POST(req: NextRequest) {
         prisma.order.update({
           where: { merchantRef: merchant_ref },
           data: {
-            status:        "PAID",
-            reference:     reference ?? null,  // Tripay reference (nullable di schema)
-            paymentMethod: payment_method,
-            paymentName:   payment_name,
-            paidAt:        paid_at ? new Date(paid_at * 1000) : new Date(),
+            status:           "PAID",
+            reference:        reference ?? null,  // Tripay reference (nullable di schema)
+            paymentMethod:    payment_method,
+            paymentName:      payment_name,
+            paidAt:           paid_at ? new Date(paid_at * 1000) : new Date(),
+            deliveredAccount: accountToGive, // ← Simpan akun di sini agar atomic!
           },
         }),
         // Kurangi stok produk sebanyak 1 dan update sisa accountStock
@@ -183,13 +184,10 @@ export async function POST(req: NextRequest) {
             accountStock: accountToGive, // Kirimkan HANYA 1 akun yang terpilih
           },
         }).then(() => {
-          // Tandai order sebagai sudah dikirim + simpan data akun yg dikirim
+          // Tandai order sebagai sudah dikirim
           return prisma.order.update({
             where: { merchantRef: merchant_ref },
-            data:  {
-              delivered:       true,
-              deliveredAccount: accountToGive, // ← Simpan akun untuk ditampilkan di halaman sukses
-            },
+            data:  { delivered: true },
           });
         }).catch(err => {
           // Log error tapi jangan throw — Tripay sudah dapat 200 response

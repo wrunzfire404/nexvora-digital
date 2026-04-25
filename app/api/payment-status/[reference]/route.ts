@@ -115,15 +115,8 @@ export async function GET(
     if (order.status === "PAID" && !order.delivered) {
       console.log(`[PayStatus] Re-trigger delivery untuk ${order.merchantRef}`);
 
-      // Ambil akun yang akan dikirim (baris pertama dari accountStock)
-      const accountLines = order.product.accountStock
-        ? order.product.accountStock.split("\n").filter((l) => l.trim() !== "")
-        : [];
-
-      const accountToGive =
-        accountLines.length > 0
-          ? accountLines[0].trim()
-          : "⚠️ Stok akun kosong. Hubungi @wrunzfire dengan Nomor Resi ini.";
+      // GAK PERLU ngurangin stok lagi, ambil dari akun yang sudah dialokasikan ke order ini
+      const accountToGive = order.deliveredAccount || "⚠️ Stok akun kosong saat pembayaran (atau error).";
 
       await triggerProductDelivery({
         id: order.id,
@@ -143,7 +136,7 @@ export async function GET(
       }).then(() =>
         prisma.order.update({
           where: { merchantRef: order.merchantRef },
-          data: { delivered: true, deliveredAccount: accountToGive },
+          data: { delivered: true },
         })
       ).catch((err) =>
         console.error("[PayStatus] Re-delivery gagal:", err)
@@ -197,12 +190,11 @@ export async function GET(
         prisma.order.update({
           where: { merchantRef: order.merchantRef },
           data: {
-            status: "PAID",
-            paymentMethod: tripayData.payment_method,
-            paymentName: tripayData.payment_name,
-            paidAt: tripayData.paid_at
-              ? new Date(tripayData.paid_at * 1000)
-              : new Date(),
+            status:           "PAID",
+            paymentMethod:    tripayData.payment_method,
+            paymentName:      tripayData.payment_name,
+            paidAt:           tripayData.paid_at ? new Date(tripayData.paid_at * 1000) : new Date(),
+            deliveredAccount: accountToGive, // ← Set di sini agar atomic!
           },
         }),
         prisma.product.update({
@@ -234,7 +226,7 @@ export async function GET(
         .then(() =>
           prisma.order.update({
             where: { merchantRef: order.merchantRef },
-            data: { delivered: true, deliveredAccount: accountToGive },
+            data: { delivered: true },
           })
         )
         .catch((err) =>
