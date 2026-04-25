@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
+import { Package, Users, CheckCircle, AlertTriangle, Receipt, CircleDollarSign, Hourglass, AlertCircle, ShoppingBag, Plus, Store, Lightbulb } from "lucide-react";
 
 type Stats = {
   totalProducts:    number;
@@ -16,14 +16,14 @@ type Stats = {
 };
 
 const STAT_CARDS = [
-  { key: "totalProducts",    label: "Total Produk",    icon: "📦", color: "text-blue-400 bg-blue-500/10 border-blue-500/20" },
-  { key: "totalUsers",       label: "Total User",      icon: "👥", color: "text-green-400 bg-green-500/10 border-green-500/20" },
-  { key: "availableProducts",label: "Produk Tersedia", icon: "✅", color: "text-teal-400 bg-teal-500/10 border-teal-500/20" },
-  { key: "outOfStock",       label: "Stok Habis",      icon: "⚠️", color: "text-orange-400 bg-orange-500/10 border-orange-500/20" },
-  { key: "totalOrders",      label: "Total Orders",    icon: "🧾", color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
-  { key: "paidOrders",       label: "Orders Dibayar",  icon: "💰", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
-  { key: "pendingOrders",    label: "Menunggu Bayar",  icon: "⏳", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-  { key: "pendingDelivery",  label: "Belum Terkirim",  icon: "🔴", color: "text-red-400 bg-red-500/10 border-red-500/20" },
+  { key: "totalProducts",    label: "Total Produk",    icon: Package, color: "text-blue-600 bg-blue-50 border-blue-100" },
+  { key: "totalUsers",       label: "Total User",      icon: Users, color: "text-indigo-600 bg-indigo-50 border-indigo-100" },
+  { key: "availableProducts",label: "Produk Tersedia", icon: CheckCircle, color: "text-emerald-600 bg-emerald-50 border-emerald-100" },
+  { key: "outOfStock",       label: "Stok Habis",      icon: AlertTriangle, color: "text-orange-600 bg-orange-50 border-orange-100" },
+  { key: "totalOrders",      label: "Total Orders",    icon: Receipt, color: "text-purple-600 bg-purple-50 border-purple-100" },
+  { key: "paidOrders",       label: "Orders Dibayar",  icon: CircleDollarSign, color: "text-green-600 bg-green-50 border-green-100" },
+  { key: "pendingOrders",    label: "Menunggu Bayar",  icon: Hourglass, color: "text-amber-600 bg-amber-50 border-amber-100" },
+  { key: "pendingDelivery",  label: "Belum Terkirim",  icon: AlertCircle, color: "text-red-600 bg-red-50 border-red-100" },
 ];
 
 export default function AdminDashboard() {
@@ -43,82 +43,77 @@ export default function AdminDashboard() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">Dashboard Overview</h1>
-        <p className="text-slate-400">Selamat datang kembali di Admin Panel Nexvora Digital</p>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+        <p className="text-sm text-gray-500 mt-1">Selamat datang kembali di Admin Panel Nexvora Digital</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        {STAT_CARDS.map((card, i) => (
-          <motion.div
-            key={card.key}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-slate-800 p-6 rounded-2xl border border-slate-700"
-          >
-            <div className="flex items-center gap-4">
-              <div className={`w-14 h-14 flex items-center justify-center rounded-xl text-2xl border ${card.color}`}>
-                {card.icon}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-400">{card.label}</p>
-                {loading ? (
-                  <div className="h-7 w-12 bg-slate-700 rounded animate-pulse mt-1" />
-                ) : (
-                  <p className="text-2xl font-bold text-white">
-                    {stats ? stats[card.key as keyof Stats] : "—"}
-                  </p>
-                )}
+        {STAT_CARDS.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={card.key}
+              className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 flex items-center justify-center rounded-xl border ${card.color}`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{card.label}</p>
+                  {loading ? (
+                    <div className="h-7 w-12 bg-gray-200 rounded animate-pulse" />
+                  ) : (
+                    <p className="text-2xl font-bold text-gray-900 leading-none">
+                      {stats ? stats[card.key as keyof Stats] : "—"}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </motion.div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-8"
-      >
-        <h2 className="text-lg font-bold text-white mb-4">Aksi Cepat</h2>
+      <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-5">Aksi Cepat</h2>
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           {[
-            { label: "Kelola Orders",    href: "/admin/orders",   icon: "🧾", desc: "Lihat & kirim akun ke pembeli", color: "bg-orange-600 hover:bg-orange-700" },
-            { label: "Tambah Produk",    href: "/admin/products",  icon: "➕", desc: "Tambah produk ke katalog",     color: "bg-blue-600 hover:bg-blue-700" },
-            { label: "Kelola User",      href: "/admin/users",     icon: "👥", desc: "Lihat dan kelola pengguna",    color: "bg-purple-600 hover:bg-purple-700" },
-            { label: "Lihat Toko",       href: "/products",        icon: "🛍️", desc: "Tampilan seperti pembeli",    color: "bg-slate-700 hover:bg-slate-600" },
-          ].map((action) => (
-            <Link key={action.href} href={action.href}>
-              <div className={`${action.color} p-5 rounded-xl cursor-pointer group`}>
-                <div className="text-2xl mb-2">{action.icon}</div>
-                <p className="text-white font-bold text-sm">{action.label}</p>
-                <p className="text-white/60 text-xs mt-1">{action.desc}</p>
-              </div>
-            </Link>
-          ))}
+            { label: "Kelola Orders",    href: "/admin/orders",   icon: ShoppingBag, desc: "Lihat & proses pesanan", color: "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100" },
+            { label: "Tambah Produk",    href: "/admin/products", icon: Plus,        desc: "Tambah produk ke katalog", color: "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100" },
+            { label: "Kelola User",      href: "/admin/users",    icon: Users,       desc: "Lihat dan kelola pengguna", color: "bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100" },
+            { label: "Lihat Toko",       href: "/products",       icon: Store,       desc: "Tampilan seperti pembeli", color: "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100" },
+          ].map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.href} href={action.href}>
+                <div className={`p-5 rounded-xl cursor-pointer border transition-colors group ${action.color}`}>
+                  <Icon className="w-6 h-6 mb-3" />
+                  <p className="font-bold text-sm mb-1">{action.label}</p>
+                  <p className="text-xs opacity-80">{action.desc}</p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
-      </motion.div>
+      </div>
 
       {/* Info Panel */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-gradient-to-r from-blue-900/30 to-purple-900/20 p-6 rounded-2xl border border-blue-800/30"
-      >
+      <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
         <div className="flex items-start gap-4">
-          <div className="text-3xl">💡</div>
+          <div className="bg-blue-100 p-2 rounded-full">
+            <Lightbulb className="w-6 h-6 text-blue-600" />
+          </div>
           <div>
-            <h3 className="text-white font-bold mb-1">Tips Admin</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">
-              Pastikan stok produk selalu diperbarui. Produk dengan stok 0 akan otomatis ditandai "Habis" dan tombol beli akan dinonaktifkan untuk pelanggan.
+            <h3 className="text-blue-900 font-bold mb-1">Tips Admin</h3>
+            <p className="text-blue-800 text-sm leading-relaxed">
+              Pastikan stok produk selalu diperbarui. Produk dengan stok 0 akan otomatis ditandai "Habis" dan tombol beli akan dinonaktifkan untuk pelanggan. Untuk produk "Manual" atau "Pre-Order", perhatikan badge peringatan pada menu Orders.
             </p>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

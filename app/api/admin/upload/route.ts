@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 
-// POST /api/admin/upload — Upload gambar produk
+// POST /api/admin/upload — Upload gambar produk via ImgBB
 export async function POST(req: NextRequest) {
   try {
     // Cek autentikasi admin
@@ -21,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validasi tipe file
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         { error: "Format file tidak didukung. Gunakan JPG, PNG, WebP, atau GIF." },
@@ -38,26 +35,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Buat nama file unik
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const uniqueName = `product_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
-
-    // Pastikan folder uploads ada
-    const uploadsDir = join(process.cwd(), "public", "uploads");
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
+    // Get API Key from Environment
+    const apiKey = process.env.IMGBB_API_KEY;
+    if (!apiKey) {
+      console.error("[Upload] IMGBB_API_KEY is not set in environment variables");
+      return NextResponse.json({ error: "Sistem penyimpanan gambar belum dikonfigurasi (API Key missing)." }, { status: 500 });
     }
 
-    // Simpan file
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(join(uploadsDir, uniqueName), buffer);
+    // Convert file to base64
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64String = buffer.toString("base64");
 
-    const url = `/uploads/${uniqueName}`;
-    return NextResponse.json({ url, filename: uniqueName });
+    // Upload to ImgBB
+    const imgbbFormData = new URLSearchParams();
+    imgbbFormData.append("key", apiKey);
+    imgbbFormData.append("image", base64String);
+    imgbbFormData.append("name", file.name.split(".")[0]); // optional name
+
+    const response = await fetch("https://api.imgbb.com/1/upload", {
+      method: "POST",
+      body: imgbbFormData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      console.error("[Upload] ImgBB Error:", data);
+      return NextResponse.json({ error: data?.error?.message || "Gagal mengupload ke server gambar (ImgBB)" }, { status: 500 });
+    }
+
+    const url = data.data.url;
+    return NextResponse.json({ url, filename: file.name });
 
   } catch (error) {
     console.error("[Upload] Error:", error);
-    return NextResponse.json({ error: "Gagal mengupload file" }, { status: 500 });
+    return NextResponse.json({ error: "Terjadi kesalahan internal saat mengupload file" }, { status: 500 });
   }
 }

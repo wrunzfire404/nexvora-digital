@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Zap, Hand, Clock, RefreshCw, Send, CheckCircle2, AlertCircle, XCircle, Search, MailBox } from "lucide-react";
 
 type Order = {
   id: string;
@@ -25,17 +26,11 @@ type Order = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  PAID:    "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-  PENDING: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  FAILED:  "bg-red-500/15 text-red-400 border-red-500/30",
-  EXPIRED: "bg-slate-500/15 text-slate-400 border-slate-500/30",
-  REFUND:  "bg-purple-500/15 text-purple-400 border-purple-500/30",
-};
-
-const DELIVERY_MODE_LABELS: Record<string, { label: string; color: string }> = {
-  INSTANT: { label: "⚡ Instant",  color: "text-cyan-400" },
-  MANUAL:  { label: "✋ Manual",   color: "text-orange-400" },
-  PO:      { label: "📅 PO",       color: "text-purple-400" },
+  PAID:    "bg-green-100 text-green-700 border-green-200",
+  PENDING: "bg-amber-100 text-amber-700 border-amber-200",
+  FAILED:  "bg-red-100 text-red-700 border-red-200",
+  EXPIRED: "bg-gray-100 text-gray-700 border-gray-200",
+  REFUND:  "bg-purple-100 text-purple-700 border-purple-200",
 };
 
 export default function AdminOrdersPage() {
@@ -113,14 +108,14 @@ export default function AdminOrdersPage() {
       {/* Header */}
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Manajemen Orders</h1>
-          <p className="text-slate-400 mt-1">Total <span className="text-white font-semibold">{total}</span> order ditemukan</p>
+          <h1 className="text-2xl font-bold text-gray-900">Manajemen Orders</h1>
+          <p className="text-gray-500 text-sm mt-1">Total <span className="text-gray-900 font-bold">{total}</span> order ditemukan</p>
         </div>
         <button
           onClick={fetchOrders}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-sm transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg text-sm transition-colors shadow-sm"
         >
-          🔄 Refresh
+          <RefreshCw className="w-4 h-4" /> Refresh
         </button>
       </div>
 
@@ -130,13 +125,13 @@ export default function AdminOrdersPage() {
           <button
             key={s}
             onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
+            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
               statusFilter === s
-                ? "bg-blue-600 border-blue-500 text-white"
-                : "bg-slate-800 border-slate-700 text-slate-400 hover:text-white"
+                ? "bg-blue-50 border-blue-200 text-blue-700"
+                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
-            {s || "Semua"}
+            {s || "Semua Status"}
           </button>
         ))}
       </div>
@@ -145,85 +140,97 @@ export default function AdminOrdersPage() {
       {loading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-16 bg-slate-800 rounded-xl animate-pulse" />
+            <div key={i} className="h-16 bg-white border border-gray-200 rounded-xl animate-pulse" />
           ))}
         </div>
       ) : orders.length === 0 ? (
-        <div className="text-center py-20 text-slate-500">
-          <p className="text-5xl mb-4">📭</p>
-          <p>Tidak ada order dengan filter ini</p>
+        <div className="text-center py-20 bg-white border border-gray-200 rounded-2xl">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MailBox className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-gray-500 font-medium">Tidak ada order dengan filter ini</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-700">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <table className="w-full text-sm text-left border-collapse">
             <thead>
-              <tr className="bg-slate-800/80 text-slate-400 text-xs uppercase tracking-wide">
-                <th className="px-4 py-3 text-left">Produk</th>
-                <th className="px-4 py-3 text-left">Pembeli</th>
-                <th className="px-4 py-3 text-left">Nominal</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Mode</th>
-                <th className="px-4 py-3 text-left">Terkirim</th>
-                <th className="px-4 py-3 text-left">Tanggal</th>
-                <th className="px-4 py-3 text-center">Aksi</th>
+              <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide border-b border-gray-200">
+                <th className="px-4 py-3 font-bold">Produk</th>
+                <th className="px-4 py-3 font-bold">Pembeli</th>
+                <th className="px-4 py-3 font-bold">Nominal</th>
+                <th className="px-4 py-3 font-bold">Status</th>
+                <th className="px-4 py-3 font-bold">Mode</th>
+                <th className="px-4 py-3 font-bold">Terkirim</th>
+                <th className="px-4 py-3 font-bold">Tanggal</th>
+                <th className="px-4 py-3 font-bold text-center">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700/50">
+            <tbody className="divide-y divide-gray-100">
               {orders.map((order) => {
-                const mode = DELIVERY_MODE_LABELS[order.product.deliveryMode] ?? { label: order.product.deliveryMode, color: "text-slate-400" };
                 const needsAction = order.status === "PAID" && !order.delivered;
                 return (
                   <motion.tr
                     key={order.id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className={`bg-slate-900/40 hover:bg-slate-800/60 transition-colors ${needsAction ? "ring-1 ring-inset ring-orange-500/30" : ""}`}
+                    className={`hover:bg-gray-50 transition-colors ${needsAction ? "bg-orange-50/30" : ""}`}
                   >
                     <td className="px-4 py-3">
-                      <p className="text-white font-medium truncate max-w-[160px]">{order.product.title}</p>
-                      <p className="text-slate-500 text-xs mt-0.5">{order.product.category}</p>
+                      <p className="text-gray-900 font-bold truncate max-w-[160px] line-clamp-1">{order.product.title}</p>
+                      <p className="text-gray-500 text-xs mt-0.5">{order.product.category}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-slate-300">{order.payerName ?? "-"}</p>
-                      <p className="text-slate-500 text-xs mt-0.5 truncate max-w-[140px]">{order.payerEmail ?? "-"}</p>
+                      <p className="text-gray-900 font-medium">{order.payerName ?? "-"}</p>
+                      <p className="text-gray-500 text-xs mt-0.5 truncate max-w-[140px]">{order.payerEmail ?? "-"}</p>
                     </td>
-                    <td className="px-4 py-3 text-white font-semibold whitespace-nowrap">
+                    <td className="px-4 py-3 text-gray-900 font-bold whitespace-nowrap">
                       {formatRupiah(order.amount)}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_COLORS[order.status] ?? "bg-slate-500/10 text-slate-400 border-slate-500/30"}`}>
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold border uppercase tracking-wider ${STATUS_COLORS[order.status] ?? "bg-gray-100 text-gray-700 border-gray-200"}`}>
                         {order.status}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs font-medium ${mode.color}`}>{mode.label}</span>
+                      <div className="flex items-center gap-1">
+                        {order.product.deliveryMode === "INSTANT" && <Zap className="w-3.5 h-3.5 text-orange-500" />}
+                        {order.product.deliveryMode === "MANUAL" && <Hand className="w-3.5 h-3.5 text-blue-500" />}
+                        {order.product.deliveryMode === "PO" && <Clock className="w-3.5 h-3.5 text-purple-500" />}
+                        <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                          {order.product.deliveryMode === "INSTANT" ? "Instan" : order.product.deliveryMode === "MANUAL" ? "Manual" : "PO"}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       {order.status === "PAID" ? (
                         order.delivered ? (
-                          <span className="text-emerald-400 text-xs font-semibold">✅ Terkirim</span>
+                          <span className="inline-flex items-center gap-1 text-green-600 text-xs font-bold bg-green-50 px-2 py-0.5 rounded border border-green-100">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Ya
+                          </span>
                         ) : (
-                          <span className="text-orange-400 text-xs font-semibold animate-pulse">⏳ Belum Kirim</span>
+                          <span className="inline-flex items-center gap-1 text-orange-600 text-xs font-bold bg-orange-50 px-2 py-0.5 rounded border border-orange-100 animate-pulse">
+                            <AlertCircle className="w-3.5 h-3.5" /> Belum
+                          </span>
                         )
                       ) : (
-                        <span className="text-slate-600 text-xs">—</span>
+                        <span className="text-gray-400 text-xs">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap font-medium">
                       {formatDate(order.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-center">
                       {order.status === "PAID" && !order.delivered ? (
                         <button
                           onClick={() => { setModal(order); setAccountInput(""); setSendResult(null); }}
-                          className="px-3 py-1.5 bg-orange-500 hover:bg-orange-400 text-white text-xs font-semibold rounded-lg transition-colors"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 hover:bg-orange-200 text-xs font-bold rounded-lg transition-colors border border-orange-200"
                         >
-                          📤 Kirim Manual
+                          <Send className="w-3.5 h-3.5" /> Kirim
                         </button>
                       ) : order.status === "PAID" ? (
-                        <span className="text-slate-600 text-xs">—</span>
+                        <span className="text-gray-400 text-xs">—</span>
                       ) : (
-                        <span className="text-slate-700 text-xs">—</span>
+                        <span className="text-gray-400 text-xs">—</span>
                       )}
                     </td>
                   </motion.tr>
@@ -243,8 +250,8 @@ export default function AdminOrdersPage() {
               onClick={() => setPage(i + 1)}
               className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
                 page === i + 1
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-800 text-slate-400 hover:text-white"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
               }`}
             >
               {i + 1}
@@ -260,59 +267,67 @@ export default function AdminOrdersPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4 sm:p-6"
             onClick={(e) => { if (e.target === e.currentTarget) { setModal(null); } }}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.92, opacity: 0, y: 20 }}
-              className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white border border-gray-200 rounded-2xl p-6 w-full max-w-lg shadow-xl"
             >
-              <h2 className="text-xl font-bold text-white mb-1">📤 Kirim Akun Manual</h2>
-              <p className="text-slate-400 text-sm mb-5">
-                Order: <code className="text-blue-400">{modal.merchantRef}</code>
-                {" | "}{modal.product.title}
-              </p>
-
-              <div className="bg-slate-800/60 rounded-xl p-4 mb-4 space-y-1.5 text-sm">
-                <p><span className="text-slate-400">Pembeli:</span> <span className="text-white">{modal.payerName ?? "-"}</span></p>
-                <p><span className="text-slate-400">Email/Chat:</span> <span className="text-blue-300 font-mono text-xs">{modal.payerEmail ?? "-"}</span></p>
-                <p><span className="text-slate-400">Nominal:</span> <span className="text-white font-semibold">{formatRupiah(modal.amount)}</span></p>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center text-orange-600">
+                  <Send className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 leading-tight">Kirim Akun Manual</h2>
+                  <p className="text-gray-500 text-xs">
+                    Order: <code className="text-blue-600 font-mono font-medium">{modal.merchantRef}</code>
+                  </p>
+                </div>
               </div>
 
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Detail Akun <span className="text-red-400">*</span>
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 mb-5 space-y-1.5 text-sm">
+                <p><span className="text-gray-500 font-medium inline-block w-20">Produk:</span> <span className="text-gray-900 font-bold">{modal.product.title}</span></p>
+                <p><span className="text-gray-500 font-medium inline-block w-20">Pembeli:</span> <span className="text-gray-900">{modal.payerName ?? "-"}</span></p>
+                <p><span className="text-gray-500 font-medium inline-block w-20">Kontak:</span> <span className="text-blue-600 font-mono text-xs font-medium">{modal.payerEmail ?? "-"}</span></p>
+                <p><span className="text-gray-500 font-medium inline-block w-20">Nominal:</span> <span className="text-gray-900 font-bold">{formatRupiah(modal.amount)}</span></p>
+              </div>
+
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Detail Akun / Lisensi <span className="text-red-500">*</span>
               </label>
               <textarea
                 rows={5}
                 value={accountInput}
                 onChange={(e) => setAccountInput(e.target.value)}
-                placeholder="Contoh:\nemail@example.com:password123\n\nAtau format apapun yang dibutuhkan produk ini."
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="Contoh:&#10;email@example.com:password123&#10;&#10;Atau format apapun yang dibutuhkan produk ini."
+                className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 text-sm font-mono placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none shadow-sm"
               />
-              <p className="text-xs text-slate-500 mt-1.5">
-                Akun ini akan dikirim langsung ke Telegram pembeli.
+              <p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" /> Akun ini akan dikirim langsung ke Telegram pembeli.
               </p>
 
               {sendResult && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`mt-4 p-3 rounded-xl text-sm font-medium ${
+                  className={`mt-4 p-3 rounded-lg text-sm font-medium flex items-center gap-2 ${
                     sendResult.ok
-                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                      : "bg-red-500/15 text-red-400 border border-red-500/30"
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
                   }`}
                 >
-                  {sendResult.ok ? "✅ " : "❌ "}{sendResult.msg}
+                  {sendResult.ok ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+                  {sendResult.msg}
                 </motion.div>
               )}
 
-              <div className="flex gap-3 mt-6">
+              <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
                 <button
                   onClick={() => { setModal(null); setSendResult(null); setAccountInput(""); }}
-                  className="flex-1 px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-sm font-medium transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-bold transition-colors"
                   disabled={sending}
                 >
                   Batal
@@ -320,9 +335,13 @@ export default function AdminOrdersPage() {
                 <button
                   onClick={handleManualDeliver}
                   disabled={sending || !accountInput.trim()}
-                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-sm font-semibold transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-sm font-bold transition-colors shadow-sm flex items-center justify-center gap-2"
                 >
-                  {sending ? "Mengirim..." : "📤 Kirim ke Pembeli"}
+                  {sending ? (
+                    <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/> Mengirim...</>
+                  ) : (
+                    <><Send className="w-4 h-4" /> Kirim Sekarang</>
+                  )}
                 </button>
               </div>
             </motion.div>
