@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Hand, Clock, RefreshCw, Send, CheckCircle2, AlertCircle, XCircle, Search, MailBox } from "lucide-react";
+import { Zap, Hand, Clock, RefreshCw, Send, CheckCircle2, AlertCircle, XCircle, Search, Mailbox } from "lucide-react";
 
 type Order = {
   id: string;
@@ -146,7 +146,7 @@ export default function AdminOrdersPage() {
       ) : orders.length === 0 ? (
         <div className="text-center py-20 bg-white border border-gray-200 rounded-2xl">
           <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <MailBox className="w-8 h-8 text-gray-400" />
+            <Mailbox className="w-8 h-8 text-gray-400" />
           </div>
           <p className="text-gray-500 font-medium">Tidak ada order dengan filter ini</p>
         </div>
