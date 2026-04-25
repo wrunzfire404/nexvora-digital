@@ -113,6 +113,11 @@ export async function notifyAdminTelegram(order: OrderWithProduct): Promise<void
     `🔑 <b>Merchant Ref:</b> <code>${order.merchantRef}</code>`,
     `🔗 <b>Tripay Ref:</b> <code>${order.reference}</code>`,
     "",
+    ...(order.product.accountStock ? [
+      `🔐 <b>AKUN DIGITAL DIBERIKAN:</b>`,
+      `<code>${order.product.accountStock}</code>`,
+      ""
+    ] : []),
     `⏰ <b>Waktu:</b> ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB`,
   ].join("\n");
 
