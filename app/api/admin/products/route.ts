@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { title, description, price, stock, imageUrl, category, isAvailable, accountStock } = await req.json();
+    const { title, description, price, stock, imageUrl, category, isAvailable, accountStock, deliveryMode } = await req.json();
 
     const product = await prisma.product.create({
       data: {
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
         category,
         isAvailable: isAvailable !== undefined ? isAvailable : true,
         accountStock: accountStock || null,
+        deliveryMode: deliveryMode || "INSTANT",
       },
     });
 

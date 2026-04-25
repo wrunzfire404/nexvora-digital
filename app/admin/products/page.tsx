@@ -9,11 +9,13 @@ type Product = {
   id: string; title: string; description: string;
   price: number; stock: number; imageUrl: string;
   category: string; isAvailable: boolean; accountStock?: string;
+  deliveryMode: string; poNote?: string;
 };
 
 const EMPTY_FORM = {
   title: "", description: "", price: "", stock: "0",
   imageUrl: "", category: "Netflix", isAvailable: true, accountStock: "",
+  deliveryMode: "INSTANT",
 };
 
 export default function AdminProductsPage() {
@@ -46,6 +48,7 @@ export default function AdminProductsPage() {
         price: product.price.toString(), stock: product.stock.toString(),
         imageUrl: product.imageUrl || "", category: product.category,
         isAvailable: product.isAvailable, accountStock: product.accountStock || "",
+        deliveryMode: product.deliveryMode || "INSTANT",
       });
       setPreview(product.imageUrl || "");
     } else {
@@ -191,9 +194,14 @@ export default function AdminProductsPage() {
                       Rp {product.price.toLocaleString("id-ID")}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`font-medium ${product.stock > 5 ? "text-green-400" : product.stock > 0 ? "text-yellow-400" : "text-red-400"}`}>
-                        {product.stock}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`font-medium ${product.stock > 5 || product.stock >= 999000 ? "text-green-400" : product.stock > 0 ? "text-yellow-400" : "text-red-400"}`}>
+                          {product.stock >= 999000 ? "Unlimited" : product.stock}
+                        </span>
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+                          {product.deliveryMode === "INSTANT" ? "Instan" : product.deliveryMode === "MANUAL" ? "Manual" : "PO"}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${product.isAvailable && product.stock > 0 ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"}`}>
@@ -299,8 +307,32 @@ export default function AdminProductsPage() {
                     </div>
                   </div>
 
-                  {/* Harga & Stok */}
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Tipe Pengiriman & Harga */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Tipe Pengiriman *</label>
+                      <div className="relative">
+                        <select required
+                          className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm appearance-none cursor-pointer"
+                          value={formData.deliveryMode} onChange={e => {
+                            const newMode = e.target.value;
+                            // Jika pindah kembali ke INSTANT, hitung ulang stok dari baris teks
+                            if (newMode === "INSTANT") {
+                              const lines = formData.accountStock.split('\n').filter(line => line.trim() !== '').length;
+                              setFormData(f => ({...f, deliveryMode: newMode, stock: lines.toString()}));
+                            } else {
+                              setFormData(f => ({...f, deliveryMode: newMode}));
+                            }
+                          }}>
+                          <option value="INSTANT">⚡ Instan (Otomatis)</option>
+                          <option value="MANUAL">💬 Manual (Proses Admin)</option>
+                          <option value="PO">⏳ Pre-Order (PO)</option>
+                        </select>
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-1.5">Harga (Rp) *</label>
                       <input type="number" min="0" required
@@ -308,28 +340,44 @@ export default function AdminProductsPage() {
                         placeholder="45000"
                         value={formData.price} onChange={e => setFormData(f => ({...f, price: e.target.value}))}/>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Total Stok Terhitung</label>
-                      <input type="number" readOnly
-                        className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 focus:outline-none text-sm cursor-not-allowed"
-                        value={formData.stock} />
-                      <p className="text-xs text-slate-500 mt-1">Stok dihitung otomatis dari baris di bawah</p>
-                    </div>
+                  </div>
+
+                  {/* Stok */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Total Stok</label>
+                    <input type="number" required
+                      readOnly={formData.deliveryMode === "INSTANT"}
+                      className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        formData.deliveryMode === "INSTANT"
+                          ? "bg-slate-800/50 border-slate-700 text-slate-400 cursor-not-allowed"
+                          : "bg-slate-800 border-slate-700 text-white"
+                      }`}
+                      placeholder="Masukkan stok..."
+                      value={formData.stock}
+                      onChange={e => setFormData(f => ({...f, stock: e.target.value}))}
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      {formData.deliveryMode === "INSTANT" 
+                        ? "Mode Instan: Stok dihitung otomatis dari baris Akun/Lisensi di bawah." 
+                        : "Mode Manual/PO: Masukkan stok secara manual. Isi angka 999999 untuk Unlimited."}
+                    </p>
                   </div>
 
                   {/* Account Stock */}
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1.5">Daftar Akun / Lisensi (1 baris = 1 stok)</label>
-                    <textarea rows={5}
-                      className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y text-sm font-mono whitespace-pre"
-                      placeholder="email1@gmail.com : pass1&#10;email2@gmail.com : pass2&#10;Atau link aktivasi..."
-                      value={formData.accountStock} 
-                      onChange={e => {
-                        const val = e.target.value;
-                        const lines = val.split('\n').filter(line => line.trim() !== '').length;
-                        setFormData(f => ({...f, accountStock: val, stock: lines.toString()}));
-                      }}/>
-                  </div>
+                  {formData.deliveryMode === "INSTANT" && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+                      <label className="block text-sm font-medium text-slate-300 mb-1.5">Daftar Akun / Lisensi (1 baris = 1 stok) *</label>
+                      <textarea rows={5} required
+                        className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y text-sm font-mono whitespace-pre"
+                        placeholder="email1@gmail.com : pass1&#10;email2@gmail.com : pass2&#10;Atau link aktivasi..."
+                        value={formData.accountStock} 
+                        onChange={e => {
+                          const val = e.target.value;
+                          const lines = val.split('\n').filter(line => line.trim() !== '').length;
+                          setFormData(f => ({...f, accountStock: val, stock: lines.toString()}));
+                        }}/>
+                    </motion.div>
+                  )}
 
                   {/* Deskripsi */}
                   <div>

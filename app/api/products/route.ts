@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
         category: true,
         isAvailable: true,
         createdAt: true,
+        deliveryMode: true,
         // SANGAT PENTING: JANGAN PERNAH SELECT accountStock DI SINI!
       },
       orderBy: { createdAt: "desc" },

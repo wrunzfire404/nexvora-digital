@@ -10,6 +10,7 @@ import { NetflixLogo, SpotifyLogo, YouTubeLogo, DisneyLogo, ChatGPTLogo, CanvaLo
 type Product = {
   id: string; title: string; description: string;
   price: number; stock: number; imageUrl: string; category: string;
+  deliveryMode: string;
 };
 
 const SERVICE_MAP: Record<string, { Logo: React.ComponentType<{className?:string}>; accent: string; bg: string; border: string; glow: string }> = {
@@ -89,11 +90,30 @@ export default function ProductDetailPage() {
               <p className="text-xs font-bold tracking-[0.25em] uppercase mb-4" style={{color:svc?.accent || "#94a3b8"}}>{product.category}</p>
               <h1 className="text-3xl md:text-4xl font-black text-white mb-6 leading-tight">{product.title}</h1>
 
-              <div className="flex items-center gap-4 mb-8 pb-8 border-b border-white/10">
+              <div className="flex items-center gap-4 mb-6 pb-6 border-b border-white/10">
                 <span className="text-4xl font-black text-white">Rp {product.price.toLocaleString("id-ID")}</span>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${product.stock > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
-                  {product.stock > 0 ? `✓ Stok ${product.stock}` : "✗ Habis"}
+                  {product.stock >= 999000 ? "✓ Stok Unlimited" : product.stock > 0 ? `✓ Stok ${product.stock}` : "✗ Habis"}
                 </span>
+              </div>
+
+              {/* Delivery Mode Info */}
+              <div className="mb-8 p-4 rounded-2xl bg-white/5 border border-white/10 flex items-start gap-4">
+                <div className="text-2xl mt-0.5">
+                  {product.deliveryMode === "INSTANT" ? "⚡" : product.deliveryMode === "MANUAL" ? "💬" : "⏳"}
+                </div>
+                <div>
+                  <p className="text-white font-bold text-sm mb-1">
+                    {product.deliveryMode === "INSTANT" ? "Pengiriman Instan Otomatis" : product.deliveryMode === "MANUAL" ? "Diproses Manual oleh Admin" : "Sistem Pre-Order"}
+                  </p>
+                  <p className="text-slate-400 text-xs leading-relaxed">
+                    {product.deliveryMode === "INSTANT" 
+                      ? "Akun akan langsung dikirim ke email Anda detik itu juga setelah pembayaran berhasil." 
+                      : product.deliveryMode === "MANUAL"
+                      ? "Setelah bayar, pesanan Anda akan segera diproses oleh admin. Pastikan Anda menghubungi kontak admin jika diperlukan."
+                      : "Produk ini bersifat pre-order dan akan dikirimkan sesuai estimasi waktu yang ditentukan."}
+                  </p>
+                </div>
               </div>
 
               <div className="mb-8 flex-grow">
