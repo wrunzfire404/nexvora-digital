@@ -41,7 +41,6 @@ export default function Navbar() {
                 sizes="40px"
                 priority
                 className="object-contain"
-                style={{ filter: "brightness(0) saturate(100%) invert(26%) sepia(91%) saturate(2371%) hue-rotate(211deg) brightness(97%) contrast(105%)" }} // approximate blue-600
               />
             </div>
             <div className="flex flex-col leading-none">

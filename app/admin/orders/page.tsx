@@ -227,8 +227,6 @@ export default function AdminOrdersPage() {
                         >
                           <Send className="w-3.5 h-3.5" /> Kirim
                         </button>
-                      ) : order.status === "PAID" ? (
-                        <span className="text-gray-400 text-xs">—</span>
                       ) : (
                         <span className="text-gray-400 text-xs">—</span>
                       )}
@@ -302,7 +300,7 @@ export default function AdminOrdersPage() {
                 rows={5}
                 value={accountInput}
                 onChange={(e) => setAccountInput(e.target.value)}
-                placeholder="Contoh:&#10;email@example.com:password123&#10;&#10;Atau format apapun yang dibutuhkan produk ini."
+                placeholder={"Contoh:\nemail@example.com:password123\n\nAtau format apapun yang dibutuhkan produk ini."}
                 className="w-full bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-900 text-sm font-mono placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none shadow-sm"
               />
               <p className="text-xs text-gray-500 mt-2 flex items-center gap-1.5">

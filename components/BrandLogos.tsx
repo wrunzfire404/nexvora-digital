@@ -2,9 +2,13 @@
 
 export function NetflixLogo({ className = "w-full h-full" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 111 30" fill="#E50914" xmlns="http://www.w3.org/2000/svg">
-      <path d="M105.062 14.28L110.983 30c-1.657-.233-3.309-.488-4.975-.7l-3.797-10.367-3.848 9.949c-1.59-.23-3.183-.408-4.788-.585l6.201-15.99L94.04 0h4.862l3.534 9.478L106.02 0h4.961l-5.919 14.28zM90.216 0h-4.807v27.853c1.6.094 3.197.233 4.807.384V0zM81.205 0H64.016v4.62h6.235v23.1c1.6 0 3.198.016 4.795.047V4.619h6.159V0zM44.434 10.078v4.62h8.15v4.619h-8.15v8.517c-1.593.14-3.183.308-4.768.477V0h16.111v4.619H44.434v5.459zM23.72 0H18.9l-9.452 27.042C11.064 27.166 12.677 27.3 14.29 27.444L15.86 22.9h8.05l1.618 4.884c1.674.198 3.343.413 5 .656L23.72 0zm-6.386 18.28l2.6-7.89 2.627 7.89h-5.226zM0 0v29.91c1.595.174 3.19.368 4.784.572V18.024l7.877 12.96a316.25 316.25 0 0 1 4.6.67V0H12.46v11.87L4.795 0H0z"/>
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className={className}
+      src="https://store-images.s-microsoft.com/image/apps.56161.9007199266246365.1d5a6a53-3c49-4f80-95d7-78d76b0e05d0.a3e87fea-e03e-4c0a-8f26-9ecef205fa7b"
+      alt="Netflix"
+      style={{ objectFit: "contain" }}
+    />
   );
 }
 

@@ -24,6 +24,16 @@ const SERVICE_MAP: Record<string, { Logo: React.ComponentType<{className?:string
 
 const CAT_LABELS = ["Netflix","Spotify","YouTube","Disney+","ChatGPT","Canva"];
 
+/** Hasilkan rating & jumlah terjual realistis dari ID produk (deterministik) */
+function getProductStats(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  const ratings = [4.6, 4.7, 4.8, 4.8, 4.9, 4.9, 5.0];
+  const rating  = ratings[hash % ratings.length];
+  const sold    = 12 + (hash % 73); // 12–84
+  return { rating: rating.toFixed(1), sold };
+}
+
 function ProductsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -170,12 +180,14 @@ function ProductsContent() {
                             <div className="text-base font-black text-blue-600 mb-1">
                               Rp {p.price.toLocaleString("id-ID")}
                             </div>
+                            {(() => { const stats = getProductStats(p.id); return (
                             <div className="flex items-center gap-1 text-xs text-gray-500">
                               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span>5.0</span>
+                              <span>{stats.rating}</span>
                               <span className="mx-1">•</span>
-                              <span>Terjual 100+</span>
+                              <span>Terjual {stats.sold}</span>
                             </div>
+                            ); })()}
                           </div>
                         </div>
 
