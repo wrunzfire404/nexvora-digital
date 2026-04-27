@@ -71,7 +71,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Ambil Email dari deliveredAccount ──────────────────────────────────────
+    // ── Validasi Masa Berlaku 48 Jam ───────────────────────────────────────────
+    const OTP_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 jam dalam milidetik
+    const orderAge      = Date.now() - new Date(order.createdAt).getTime();
+
+    if (orderAge > OTP_EXPIRY_MS) {
+      console.log(`[OTP API] ⏰ Order ${order.merchantRef} sudah lebih dari 48 jam — akses OTP ditolak`);
+      return NextResponse.json(
+        {
+          success: false,
+          error:   "Masa akses OTP mandiri telah berakhir (48 jam). Hubungi Admin jika butuh bantuan.",
+          expired: true,
+        },
+        { status: 403 }
+      );
+    }
+
     // Format deliveredAccount: "email@booplink.xyz:password123"
     const deliveredAccount = order.deliveredAccount ?? "";
     const emailMatch       = deliveredAccount.match(/([^\s:]+@booplink\.xyz)/i);

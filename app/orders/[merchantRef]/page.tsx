@@ -165,6 +165,11 @@ export default function OrderDetailPage() {
     });
   };
 
+  // ── Logika Expiry OTP 48 Jam ─────────────────────────────────────────────
+  const isOtpExpired = order
+    ? (Date.now() - new Date(order.createdAt).getTime()) > 48 * 60 * 60 * 1000
+    : false;
+
   // ── Loading ─────────────────────────────────────────────────────────────────
   if (loading) return (
     <div className="min-h-screen bg-[#000000] flex flex-col items-center justify-center gap-4">
@@ -343,14 +348,38 @@ export default function OrderDetailPage() {
                 ⚠️ Jangan bagikan detail akun ini kepada siapa pun.
               </p>
 
-              {/* ── Tombol OTP ───────────────────────────────────────────── */}
-              <div className="mt-4">
-                <OtpButton
-                  merchantRef={order.merchantRef}
-                  isOtpEnabled={order.product.isOtpEnabled}
-                  deliveredAccount={order.deliveredAccount}
-                />
-              </div>
+              {/* ── Instruksi & Tombol OTP ────────────────────────────────── */}
+              {order.product.isOtpEnabled && order.deliveredAccount?.includes('@booplink.xyz') && (
+                <div className="mt-5 pt-4 border-t border-neutral-800">
+                  <p className="text-[11px] text-neutral-400 mb-3 leading-relaxed">
+                    ⚠️ Butuh kode verifikasi? Klik tombol di bawah ini.
+                    Kode hanya akan muncul jika aplikasi/web meminta verifikasi masuk.
+                  </p>
+
+                  {isOtpExpired ? (
+                    <div className="flex items-start gap-2.5 bg-neutral-900 border border-neutral-700 rounded-xl p-3.5">
+                      <span className="text-lg">🔒</span>
+                      <div>
+                        <p className="text-neutral-400 text-xs font-medium">Masa Akses OTP Berakhir</p>
+                        <p className="text-neutral-600 text-[11px] mt-0.5">
+                          Akses mandiri OTP hanya tersedia 48 jam setelah pembelian.
+                          Hubungi{" "}
+                          <a href="https://t.me/wrunzfire" className="text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer">
+                            Admin
+                          </a>{" "}
+                          jika butuh bantuan.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <OtpButton
+                      merchantRef={order.merchantRef}
+                      isOtpEnabled={order.product.isOtpEnabled}
+                      deliveredAccount={order.deliveredAccount}
+                    />
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

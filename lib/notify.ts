@@ -172,6 +172,7 @@ export async function triggerProductDelivery(order: OrderWithProduct): Promise<v
     if (order.payerEmail && order.payerEmail.startsWith('tg_')) {
       const buyerChatId = order.payerEmail.split('@')[0].replace('tg_', '');
 
+      const appUrl = process.env.NEXTAUTH_URL ?? "https://nexvoradigital.store";
       const deliveryMessage = [
         "✅ <b>Pesanan Anda Berhasil Diproses!</b>",
         "",
@@ -182,6 +183,10 @@ export async function triggerProductDelivery(order: OrderWithProduct): Promise<v
         `<code>${accountData}</code>`,
         "",
         "⚠️ <i>Tolong jangan bagikan detail di atas kepada siapa pun.</i>",
+        "",
+        `🔗 <b>Simpan link ini</b> untuk akses detail akun &amp; OTP kapan saja:`,
+        `<a href="${appUrl}/orders/${order.merchantRef}">${appUrl}/orders/${order.merchantRef}</a>`,
+        "",
         "Terima kasih telah berbelanja di Nexvora Digital! 🙏"
       ].join("\n");
 
