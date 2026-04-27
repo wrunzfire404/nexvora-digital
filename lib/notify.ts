@@ -5,13 +5,14 @@
  *
  * Flow pengiriman produk digital:
  * 1. Kirim notifikasi ke admin via Telegram Bot
- * 2. Kirim akun ke pembeli via Telegram (jika dari bot)
+ * 2. Kirim akun ke pembeli via Telegram (jika dari bot) + tombol OTP jika aktif
  * 3. Kirim invoice + akun ke pembeli via Email (Resend)
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 
 import { sendDeliveryEmail } from "@/lib/email";
+import { isOtpSupportedEmail } from "@/lib/tempmail";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,7 @@ interface OrderWithProduct {
     title: string;
     category: string;
     accountStock: string | null;
+    isOtpEnabled?: boolean;     // Flag apakah produk mendukung fitur OTP
   };
 }
 
@@ -41,7 +43,16 @@ interface OrderWithProduct {
  * @param chatId  - Chat ID tujuan (bisa user atau grup/channel)
  * @param message - Pesan dalam format HTML
  */
-async function sendTelegramMessage(chatId: string, message: string): Promise<boolean> {
+interface TelegramInlineButton {
+  text:          string;
+  callback_data: string;
+}
+
+async function sendTelegramMessage(
+  chatId:        string,
+  message:       string,
+  inlineButtons?: TelegramInlineButton[][],  // Array of rows → columns
+): Promise<boolean> {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
     console.warn("[Notify] TELEGRAM_BOT_TOKEN tidak dikonfigurasi, skip Telegram notification");
@@ -49,17 +60,26 @@ async function sendTelegramMessage(chatId: string, message: string): Promise<boo
   }
 
   try {
+    const payload: Record<string, unknown> = {
+      chat_id:    chatId,
+      text:       message,
+      parse_mode: "HTML", // Mendukung <b>, <i>, <code>, dll.
+    };
+
+    // Tambahkan inline keyboard jika ada tombol
+    if (inlineButtons && inlineButtons.length > 0) {
+      payload.reply_markup = {
+        inline_keyboard: inlineButtons,
+      };
+    }
+
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
       {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id:    chatId,
-          text:       message,
-          parse_mode: "HTML", // Mendukung <b>, <i>, <code>, dll.
-        }),
-        signal: AbortSignal.timeout(10_000), // Timeout 10 detik
+        body:    JSON.stringify(payload),
+        signal:  AbortSignal.timeout(10_000), // Timeout 10 detik
       }
     );
 
@@ -165,8 +185,25 @@ export async function triggerProductDelivery(order: OrderWithProduct): Promise<v
         "Terima kasih telah berbelanja di Nexvora Digital! 🙏"
       ].join("\n");
 
+      // ── Cek apakah perlu menampilkan tombol OTP ───────────────────────────
+      // Ekstrak email dari format: "email@booplink.xyz:password"
+      const accountEmailMatch = accountData.match(/([^\s:]+@booplink\.xyz)/i);
+      const accountEmail      = accountEmailMatch ? accountEmailMatch[1] : null;
+      const showOtpButton     = order.product.isOtpEnabled === true
+                                && isOtpSupportedEmail(accountEmail);
+
+      // Buat inline keyboard OTP jika kondisi terpenuhi
+      const inlineButtons: TelegramInlineButton[][] | undefined = showOtpButton
+        ? [[
+            {
+              text:          "📥 Minta Kode OTP",
+              callback_data: `request_otp_${order.id}`,
+            }
+          ]]
+        : undefined;
+
       notifyPromises.push(
-        sendTelegramMessage(buyerChatId, deliveryMessage)
+        sendTelegramMessage(buyerChatId, deliveryMessage, inlineButtons)
       );
     }
 

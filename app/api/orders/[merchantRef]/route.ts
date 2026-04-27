@@ -13,7 +13,13 @@ export async function GET(
       where: { merchantRef },
       include: {
         product: {
-          select: { title: true, category: true, imageUrl: true, price: true },
+          select: {
+            title:        true,
+            category:     true,
+            imageUrl:     true,
+            price:        true,
+            isOtpEnabled: true,  // ← Expose flag OTP ke frontend
+          },
         },
       },
     });
@@ -23,18 +29,21 @@ export async function GET(
     }
 
     return NextResponse.json({
-      merchantRef:   order.merchantRef,
-      reference:     order.reference,
-      status:        order.status,
-      amount:        order.amount,
-      payerName:     order.payerName,
-      paymentMethod: order.paymentMethod,
-      paymentName:   order.paymentName,
-      checkoutUrl:   order.checkoutUrl,
-      paidAt:        order.paidAt,
-      expiredAt:     order.expiredAt,
-      createdAt:     order.createdAt,
-      product:       order.product,
+      id:              order.id,
+      merchantRef:     order.merchantRef,
+      reference:       order.reference,
+      status:          order.status,
+      amount:          order.amount,
+      payerName:       order.payerName,
+      paymentMethod:   order.paymentMethod,
+      paymentName:     order.paymentName,
+      checkoutUrl:     order.checkoutUrl,
+      paidAt:          order.paidAt,
+      expiredAt:       order.expiredAt,
+      createdAt:       order.createdAt,
+      delivered:       order.delivered,
+      deliveredAccount: order.deliveredAccount,  // ← Akun yang terkirim (untuk OTP check)
+      product:         order.product,
     });
 
   } catch (error) {

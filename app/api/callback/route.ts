@@ -182,6 +182,7 @@ export async function POST(req: NextRequest) {
             title:        order.product.title,
             category:     order.product.category,
             accountStock: accountToGive, // Kirimkan HANYA 1 akun yang terpilih
+            isOtpEnabled: order.product.isOtpEnabled, // ← Teruskan flag OTP
           },
         }).then(() => {
           // Tandai order sebagai sudah dikirim
