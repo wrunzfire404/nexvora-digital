@@ -40,7 +40,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { id } = await params;
 
   try {
-    const { title, description, price, stock, imageUrl, category, isAvailable, accountStock, deliveryMode } = await req.json();
+    const { title, description, price, stock, imageUrl, category, isAvailable, accountStock, deliveryMode, isOtpEnabled } = await req.json();
 
     const product = await prisma.product.update({
       where: { id },
@@ -54,6 +54,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
         isAvailable: isAvailable !== undefined ? isAvailable : true,
         accountStock: accountStock || null,
         deliveryMode: deliveryMode || "INSTANT",
+        isOtpEnabled: isOtpEnabled === true,  // Pastikan boolean
       },
     });
 

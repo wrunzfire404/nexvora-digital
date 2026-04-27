@@ -11,12 +11,14 @@ type Product = {
   price: number; stock: number; imageUrl: string;
   category: string; isAvailable: boolean; accountStock?: string;
   deliveryMode: string; poNote?: string;
+  isOtpEnabled: boolean;  // Tombol Minta Kode OTP
 };
 
 const EMPTY_FORM = {
   title: "", description: "", price: "", stock: "0",
   imageUrl: "", category: "Netflix", isAvailable: true, accountStock: "",
   deliveryMode: "INSTANT",
+  isOtpEnabled: false,
 };
 
 export default function AdminProductsPage() {
@@ -50,6 +52,7 @@ export default function AdminProductsPage() {
         imageUrl: product.imageUrl || "", category: product.category,
         isAvailable: product.isAvailable, accountStock: product.accountStock || "",
         deliveryMode: product.deliveryMode || "INSTANT",
+        isOtpEnabled: product.isOtpEnabled ?? false,
       });
       setPreview(product.imageUrl || "");
     } else {
@@ -89,7 +92,12 @@ export default function AdminProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const payload = { ...formData, price: parseFloat(formData.price), stock: parseInt(formData.stock) };
+    const payload = {
+      ...formData,
+      price:        parseFloat(formData.price),
+      stock:        parseInt(formData.stock),
+      isOtpEnabled: formData.isOtpEnabled,  // Sertakan flag OTP
+    };
     try {
       const url    = editingId ? `/api/admin/products/${editingId}` : "/api/admin/products";
       const method = editingId ? "PUT" : "POST";
@@ -391,6 +399,21 @@ export default function AdminProductsPage() {
                     <button type="button" onClick={() => setFormData(f => ({...f, isAvailable: !f.isAvailable}))}
                       className={`relative w-12 h-6 rounded-full transition-colors ${formData.isAvailable ? "bg-blue-600" : "bg-gray-300"}`}>
                       <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formData.isAvailable ? "translate-x-6" : "translate-x-0"}`}/>
+                    </button>
+                  </div>
+
+                  {/* Toggle OTP */}
+                  <div className="flex items-center justify-between p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-sm font-bold text-blue-900">Aktifkan Tombol OTP</p>
+                        <span className="text-[10px] font-bold bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded uppercase tracking-wider">@booplink.xyz</span>
+                      </div>
+                      <p className="text-[11px] text-blue-600 mt-0.5">Tampilkan tombol "📥 Minta Kode OTP" di Telegram &amp; Web setelah akun dikirim</p>
+                    </div>
+                    <button type="button" onClick={() => setFormData(f => ({...f, isOtpEnabled: !f.isOtpEnabled}))}
+                      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ml-4 ${formData.isOtpEnabled ? "bg-blue-600" : "bg-gray-300"}`}>
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${formData.isOtpEnabled ? "translate-x-6" : "translate-x-0"}`}/>
                     </button>
                   </div>
 
